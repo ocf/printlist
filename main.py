@@ -34,10 +34,7 @@ def read_config():
     return host, password
 
 def main():
-    username = os.environ.get('SUDO_USER')
-
-    if not username:
-        raise RuntimeError('Unable to read SUDO_USER.')
+    username = os.environ.get('USER')
 
     # read config file
     host, password = read_config()
