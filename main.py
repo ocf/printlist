@@ -1,13 +1,13 @@
 import functools
 import os
 import sys
+import redis
 from configparser import ConfigParser
 from select import poll
 from select import POLLERR
 from select import POLLHUP
-
-import redis
-
+from flask import Flask
+from flask import render_template
 
 BROKER_AUTH = '/opt/share/broker/broker.conf'
 
@@ -20,13 +20,11 @@ redis_connection = functools.partial(
     password=None
 )
 
-
 def subscribe(host, password, *channels):
     rc = redis_connection(host=host, password=password)
     sub = rc.pubsub(ignore_subscribe_messages=True)
     sub.subscribe(channels)
     return sub
-
 
 def read_config():
     config = ConfigParser()
@@ -34,7 +32,6 @@ def read_config():
     host = config.get('broker', 'host')
     password = config.get('broker', 'password')
     return host, password
-
 
 def main():
     username = os.environ.get('SUDO_USER')
@@ -59,7 +56,6 @@ def main():
             test_file.close()
         if p.poll(0.1):
             break
-
 
 if __name__ == '__main__':
     main()

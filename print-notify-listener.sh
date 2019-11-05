@@ -9,7 +9,7 @@ icon=/opt/share/xsession/images/ocf-color-256.png
 [[ -p "$pipe" ]] && rm -f "$pipe"
 mkfifo "$pipe"
 
-sudo -u ocfbroker /opt/share/puppet/print-notify-handler > "$pipe" &
+sudo -u ocfbroker /opt/share/puppet/main.py > "$pipe" &
 
 # listener
 exec 3< "$pipe"
