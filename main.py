@@ -9,8 +9,6 @@ from select import POLLHUP
 from flask import Flask
 from flask import render_template
 
-BROKER_AUTH = '/opt/share/broker/broker.conf'
-
 redis_connection = functools.partial(
     redis.StrictRedis,
     host='broker',
@@ -26,18 +24,11 @@ def subscribe(host, password, *channels):
     sub.subscribe(channels)
     return sub
 
-def read_config():
-    config = ConfigParser()
-    config.read(BROKER_AUTH)
-    host = config.get('broker', 'host')
-    password = config.get('broker', 'password')
-    return host, password
-
 def main():
     username = os.environ.get('USER')
 
     # read config file
-    host, password = read_config()
+    host, password = 'broker.ocf.berkeley.edu', '###'
 
     # set up stdout monitoring
     p = poll()
