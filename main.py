@@ -24,6 +24,22 @@ def subscribe(host, password, *channels):
     sub.subscribe(channels)
     return sub
 
+def parse_printer(status_message):
+    return status_message.split()[-1].strip('.')
+
+printer_dict = {'logjam': ['test_user1'], 'papercut': ['test_user2'], 'pagefruit': ['test_user3']}
+printer_dict['logjam'] = ['test_user1']
+printer_dict['papercut'] = ['test_user2']
+printer_dict['pagefruit'] = ['test_user3']
+
+def add_to_printer_dict (username, printer):
+    if printer == 'logjam':
+        printer_dict['logjam'].append(username)
+    elif printer == 'papercut':
+        printer_dict['papercut'].append(username)
+    elif printer == 'pagefruit':
+        printer_dict['pagefruit'].append(username)
+
 def main():
     username = os.environ.get('USER')
 
@@ -40,8 +56,9 @@ def main():
         if message and 'data' in message:
             status_message = message['data'].decode(encoding='UTF-8').replace('\n', ' ')
             test_file = open('testfile.txt', 'w')
-            print(status_message, file = test_file, flush=True)
+            print(username + ' | ' + parse_printer(status_message) + '\n', file = test_file, flush=True)
             test_file.close()
+            add_to_printer_dict(username, parse_printer(status_message))
         if p.poll(0.1):
             break
 
@@ -52,4 +69,16 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return render_template("home.html")
+    return ', '.join(printer_dict['logjam'])
+
+@app.route('/logjam')
+def logjam():
+    return render_template('logjam.html')
+
+@app.route('/papercut')
+def papercut():
+    return render_template('papercut.html')
+
+@app.route('/pagefault')
+def pagefault():
+    return render_template('pagefault.html')
