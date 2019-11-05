@@ -57,6 +57,9 @@ def main():
         if p.poll(0.1):
             break
 
+if __name__ == "__main__":
+    main()
+
 app = Flask(__name__)
 
 @app.route('/')
