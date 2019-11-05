@@ -1,0 +1,1 @@
+Your print job 'output.pdf' was accepted and sent to pagefault.
