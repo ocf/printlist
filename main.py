@@ -27,18 +27,15 @@ def subscribe(host, password, *channels):
 def parse_printer(status_message):
     return status_message.split()[-1].strip('.')
 
-printer_dict = {'logjam': ['test_user1'], 'papercut': ['test_user2'], 'pagefruit': ['test_user3']}
-printer_dict['logjam'] = ['test_user1']
-printer_dict['papercut'] = ['test_user2']
-printer_dict['pagefruit'] = ['test_user3']
+printer_dict = {'logjam': ['test_user1'], 'pagefault': ['test_user2'], 'papercut': ['test_user3']}
 
 def add_to_printer_dict (username, printer):
     if printer == 'logjam':
         printer_dict['logjam'].append(username)
+    elif printer == 'pagefault':
+        printer_dict['pagefault'].append(username)
     elif printer == 'papercut':
         printer_dict['papercut'].append(username)
-    elif printer == 'pagefruit':
-        printer_dict['pagefruit'].append(username)
 
 def main():
     username = os.environ.get('USER')
