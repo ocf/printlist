@@ -69,7 +69,8 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return ', '.join(printer_dict['logjam'])
+    return printer_dict
+    #return ', '.join(printer_dict['logjam'])
 
 @app.route('/logjam')
 def logjam():
