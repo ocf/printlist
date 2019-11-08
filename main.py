@@ -62,6 +62,7 @@ def main():
 if __name__ == "__main__":
     main()
 
+"""
 app = Flask(__name__)
 
 @app.route('/')
@@ -80,3 +81,4 @@ def papercut():
 @app.route('/pagefault')
 def pagefault():
     return render_template('pagefault.html')
+"""
