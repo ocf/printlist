@@ -25,8 +25,8 @@ def monitor_printer(printer):
     while True:
         message = s.get_message()
         if message and 'data' in message:
-            user_list = message['data'].decode(encoding='UTF-8').replace('\n', ' ')
-            print(user_list)
+            username = message['data'].decode(encoding='UTF-8').replace('\n', ' ')
+            print(username)
 
 def main():
     monitor_printer('pagefault')
