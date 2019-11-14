@@ -1,3 +1,4 @@
+#meant to be run in interactive mode
 import functools
 import os
 import sys
@@ -27,9 +28,3 @@ def monitor_printer(printer):
         if message and 'data' in message:
             username = message['data'].decode(encoding='UTF-8').replace('\n', ' ')
             print(username)
-
-def main():
-    monitor_printer('pagefault')
-
-if __name__ == '__main__':
-    main()

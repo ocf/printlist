@@ -2,7 +2,6 @@ import functools
 import os
 import sys
 import redis
-from multiprocessing import Process
 from flask import Flask
 from flask import render_template
 
@@ -21,28 +20,25 @@ def subscribe(host, password, *channels):
     sub.subscribe(channels)
     return sub
 
-printer_dict = {'logjam': ['test_user1'], 'pagefault': ['test_user2'], 'papercut': ['test_user3']}
+printer_dict = {'printer-logjam': [], 'printer-pagefault': [], 'printer-papercut': []}
 
-def pop_user(printer, username):
+def push_user(printer, username):
     printer_dict[printer].append(username)
 
-def monitor_printer(printer):
+def monitor_printer():
     host, password = 'broker.ocf.berkeley.edu', '###'
 
-    s = subscribe(host, password, 'printer-' + printer)
+    s = subscribe(host, password, 'printer-logjam', 'printer-pagefault', 'printer-papercut')
     while True:
         message = s.get_message()
         if message and 'data' in message:
+            printer = message['channel'].decode(encoding='UTF-8').replace('\n', ' ')
             username = message['data'].decode(encoding='UTF-8').replace('\n', ' ')
-            pop_user(printer, username)
+            push_user(printer, username)
+            print(printer_dict) #temporary to see if things are working
 
 if __name__ == '__main__':
-    p1 = Process(target = monitor_printer('logjam'))
-    p1.start
-    p2 = Process(target = monitor_printer('pagefault'))
-    p2.start
-    p3 = Process(target = monitor_printer('papercut'))
-    p3.start
+    monitor_printer()
 
 app = Flask(__name__)
 
