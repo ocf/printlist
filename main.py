@@ -3,8 +3,12 @@ import os
 import sys
 import time
 import redis
+import threading
+from configparser import ConfigParser
 from flask import Flask
 from flask import render_template
+
+BROKER_AUTH = 'broker.conf'
 
 redis_connection = functools.partial(
     redis.StrictRedis,
@@ -21,6 +25,13 @@ def subscribe(host, password, *channels):
     sub.subscribe(channels)
     return sub
 
+def read_config():
+    config = ConfigParser()
+    config.read(BROKER_AUTH)
+    host = config.get('broker', 'host')
+    password = config.get('broker', 'password')
+    return host, password
+
 printer_dict = {'printer-logjam': [], 'printer-pagefault': [], 'printer-papercut': []}
 
 def push_user(printer, username):
@@ -35,7 +46,7 @@ def check_user(printer, username):
         remove_user(printer, username)
 
 def monitor_printer():
-    host, password = 'broker.ocf.berkeley.edu', '###'
+    host, password = read_config()
 
     s = subscribe(host, password, 'printer-logjam', 'printer-pagefault', 'printer-papercut')
     while True:
@@ -49,11 +60,16 @@ def monitor_printer():
             for u in printer_dict[p]:
                 check_user(p, u)
 
-if __name__ == '__main__':
-    monitor_printer()
-
 app = Flask(__name__)
 
-@app.route('/')
-def home():
-    return printer_dict
+@app.route('/<string:printer>')
+def home(printer):
+    p = 'printer-' + printer
+    requested_list = printer_dict[p]
+    return render_template('home.html', title = 'home', requested_list = requested_list, printer = printer)
+
+if __name__ == '__main__':
+    t1 = threading.Thread(target = app.run, kwargs = dict(port = 8020, host = "0.0.0.0", debug = True, use_reloader = False, threaded = True))
+    t2 = threading.Thread(target = monitor_printer)
+    t1.start()
+    t2.start()
