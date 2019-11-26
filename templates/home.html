@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
 <head>
+
 <meta http-equiv="refresh" content="5" name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
 body {
   margin: 0;
@@ -28,12 +32,10 @@ body {
   color: black;
 }
 
-.topnav a.active {
-  background-color: #4CAF50;
-  color: white;
-}
 </style>
+
 </head>
+
 <body>
 
 <div class="topnav">
@@ -45,9 +47,10 @@ body {
 <div style="padding-left:16px">
   <h2>Printer Jobs for {{printer}}:</h2>
   {% for user in requested_list %}
-  <font size = "4.5">{{ user[0] }}<br /></font>
+  <font size="4.5">{{ user[0] }}<br /></font>
   {% endfor %}
 </div>
 
 </body>
+
 </html>
