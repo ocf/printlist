@@ -60,16 +60,16 @@ def monitor_printer():
             for u in printer_dict[p]:
                 check_user(p, u)
 
-app = Flask(__name__)
+def create_app():
+    app = Flask(__name__)
+    monitor_process = threading.Thread(target = monitor_printer)
+    monitor_process.start()
+    return app
+
+app = create_app()
 
 @app.route('/<string:printer>')
 def home(printer):
     p = 'printer-' + printer
     requested_list = printer_dict[p]
     return render_template('home.html', title = 'home', requested_list = requested_list, printer = printer)
-
-if __name__ == '__main__':
-    t1 = threading.Thread(target = app.run, kwargs = dict(port = 8020, host = "0.0.0.0", debug = True, use_reloader = False, threaded = True))
-    t2 = threading.Thread(target = monitor_printer)
-    t1.start()
-    t2.start()
