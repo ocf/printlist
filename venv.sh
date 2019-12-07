@@ -3,6 +3,6 @@
 #Run it by typing source venv.sh
 
 cd
-python3 -m venv wgsi-tester
-. wgsi-tester/bin/activate
+python3 -m venv wsgi-tester
+. wsgi-tester/bin/activate
 pip install redis flask gunicorn

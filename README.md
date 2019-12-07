@@ -3,3 +3,4 @@ Displays the print queue of Berkeley OCF printers on a web page for easy viewing
 
 dependencies: redis, flask, gunicorn
 useful links: https://github.com/ocf/labmap/blob/master/Dockerfile
+useful command: sudo docker run -d -it -p 5000:5000 --name pdt print-disp-test
