@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service
+spec:
+  selector:
+    app: printlist
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+  labels:
+    app: printlist
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: printlist
+  template:
+    metadata:
+      labels:
+        app: printlist
+    spec:
+      containers:
+        - name: printlist-gunicorn
+          image: "python:3.5.9-buster"
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: 50m
+          ports:
+            - containerPort: 8000
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: virtual-host-ingress
+spec:
+  rules:
+    - host: printlist.ocf.berkeley.edu
+      http:
+        paths:
+          - backend:
+              serviceName: service
+              servicePort: 80

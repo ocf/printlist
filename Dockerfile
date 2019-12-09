@@ -13,6 +13,6 @@ COPY . /usr/src/app/
 
 USER nobody
 
-EXPOSE 5000
+EXPOSE 8000
 
-CMD gunicorn -b 0.0.0.0:5000 main:app
+CMD gunicorn -b 0.0.0.0:8000 main:app
