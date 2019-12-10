@@ -5,4 +5,4 @@ dependencies: redis, flask, gunicorn
 
 useful links: https://github.com/ocf/labmap/blob/master/Dockerfile
 
-useful command: sudo docker run -d -it -p 8000:8000 --name printlist-gunicorn print-disp
+useful command: `sudo docker run -d -it -p 8000:8000 --name printlist-gunicorn print-disp`
