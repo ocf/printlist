@@ -72,4 +72,4 @@ app = create_app()
 def home(printer):
     p = 'printer-' + printer
     requested_list = printer_dict[p]
-    return render_template('home.html', title = 'home', requested_list = requested_list, printer = printer)
+    return render_template('home.html', title = 'home', requested_list = set(requested_list), printer = printer)
