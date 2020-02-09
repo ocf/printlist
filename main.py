@@ -8,7 +8,7 @@ from configparser import ConfigParser
 from flask import Flask
 from flask import render_template
 
-BROKER_AUTH = 'broker.conf'
+BROKER_AUTH = 'conf/broker.conf'
 
 redis_connection = functools.partial(
     redis.StrictRedis,
