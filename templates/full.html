@@ -94,6 +94,7 @@ footer {
 .printlist-user-handle {
   font-size: 3rem;
   color: #666;
+  overflow-x: hidden;
 }
 </style>
 </head>
@@ -111,7 +112,7 @@ footer {
   {% for printer in printer_names %}
   <div class="printlist">
     <h1>{{printer[1]}}</h1>
-    {% for user in print_list[printer[0]] %}
+    {% for user in print_list[printer[0]]|reverse %}
     <div class="printlist-user">
       <div class="printlist-user-handle">{{ user[0] }}</div>
       <!-- <div>Received <span class="x-to-time">{{ user[1] }}</span></div> -->
