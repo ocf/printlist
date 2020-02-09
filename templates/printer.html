@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<!-- Solo printer page template (use vertically) -->
+<!-- Move from static. -->
+<link href="https://fonts.googleapis.com/css?family=Fira+Sans&display=swap" rel="stylesheet">
+<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<title>{{printer}}</title>
+<head>
+<!-- <meta http-equiv="refresh" content="5" name="viewport" content="width=device-width, initial-scale=1"> -->
+<style>
+body {
+  margin: 0;
+  font-family: "Fira Sans", "Comic Sans MS", sans-serif;
+}
+
+header {
+  display: flex;
+  overflow: hidden;
+  background-color: #de9;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  font-size: 4.5em;
+  padding: 0 50px;
+}
+
+.topnav {
+  display: none;
+}
+
+.topnav a {
+  float: left;
+  color: #353535;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+.topnav a:hover {
+  background-color: rgb(143, 143, 143);
+  color: black;
+}
+
+.topnav-img {
+  padding-right: 20px;
+}
+
+.printlist, footer {
+  padding-left: 40px;
+}
+
+.printlist-user {
+  font-size: 3.5em;
+}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>{{printer}}</h1>
+  <nav class="topnav">
+    <a href="logjam">logjam</a>
+    <a href="papercut">papercut</a>
+    <a href="pagefault">pagefault</a>
+  </nav>
+  <img class="topnav-img" src="{{ url_for('static', filename='ocf-logo.svg') }}"/>
+</header>
+<div class="printlist">
+  <h2>Printer Jobs for {{printer}}:</h2>
+  {% for user in requested_list %}
+  <div class="printlist-user">{{ user[0] }}<br /></div>
+  {% endfor %}
+</div>
+<footer>
+  Last updated (some while) ago.
+</footer>
+</body>
+</html>

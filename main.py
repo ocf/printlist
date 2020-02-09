@@ -8,8 +8,10 @@ from configparser import ConfigParser
 from flask import Flask
 from flask import render_template
 
+# Contains Redis secrets
 BROKER_AUTH = 'broker.conf'
 
+# Opens a Redis connection (printer information)
 redis_connection = functools.partial(
     redis.StrictRedis,
     host='broker',
@@ -33,6 +35,7 @@ def read_config():
     return host, password
 
 printer_dict = {'printer-logjam': [], 'printer-pagefault': [], 'printer-papercut': []}
+printer_names = [('printer-papercut', 'papercut'), ('printer-logjam', 'logjam'), ('printer-pagefault', 'pagefault')]
 
 def push_user(printer, username):
     printer_dict[printer].append(username)
@@ -68,8 +71,13 @@ def create_app():
 
 app = create_app()
 
-@app.route('/<string:printer>')
-def home(printer):
+@app.route('/home')
+def home():
+    return render_template('full.html', title = 'home', print_list = printer_dict, printer_names = printer_names)
+
+
+@app.route('/printer/<string:printer>')
+def printlist(printer):
     p = 'printer-' + printer
     requested_list = printer_dict[p]
-    return render_template('home.html', title = 'home', requested_list = set(requested_list), printer = printer)
+    return render_template('printer.html', title = 'printer', requested_list = set(requested_list), printer = printer)
