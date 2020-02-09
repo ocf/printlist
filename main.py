@@ -9,7 +9,7 @@ from flask import Flask
 from flask import render_template
 
 # Contains Redis secrets
-BROKER_AUTH = 'broker.conf'
+BROKER_AUTH = 'conf/broker.conf'
 
 # Opens a Redis connection (printer information)
 redis_connection = functools.partial(
