@@ -60,7 +60,6 @@ def monitor_printer():
     s = subscribe(host, password, 'printer-logjam', 'printer-pagefault', 'printer-papercut')
     while True:
         message = s.get_message()
-        print(message)
         if message and 'data' in message:
             printer = message['channel'].decode(encoding='UTF-8').replace('\n', ' ')
             username = (message['data'].decode(encoding='UTF-8').replace('\n', ' '), time.time())
