@@ -109,7 +109,7 @@ def reload():
     return jsonify(recent)
 
 if DEV_MODE:
-    app.config.update(TEMPLATES_AUTO_RELOAD = True)
+    app.config.update(TEMPLATES_AUTO_RELOAD = True, SEND_FILE_MAX_AGE_DEFAULT=0)
     app.run(port=3000)
     while True:
         try:

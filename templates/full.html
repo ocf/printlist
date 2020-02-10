@@ -112,14 +112,6 @@ footer {
   {% for printer in printer_names %}
   <div class="printlist {{printer[0]}}">
     <h1>{{printer[1]}}</h1>
-    {% for user in print_list[printer[0]]|reverse %}
-    <div class="printlist-user">
-      <div class="printlist-user-handle">{{ user[0] }}</div>
-      <!-- <div>Received <span class="x-to-time">{{ user[1] }}</span></div> -->
-    </div>
-    {% else %}
-    <div class="printlist-null">(there are no jobs printing)</div>
-    {% endfor %}
   </div>
   {% endfor %}
 </div>
