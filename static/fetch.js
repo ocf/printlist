@@ -17,6 +17,7 @@ function element(username, date){
 	name.classList.add('printlist-user-handle');
 	name.innerText = username.replace(/\</g, '&lt;').replace(/\>/g, '&gt;');
 	wrapper.appendChild(name);
+	setTimeout(()=>wrapper.remove(), 180000)
 	return wrapper;
 }
 
