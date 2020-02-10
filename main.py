@@ -97,15 +97,12 @@ def printlist(printer):
 
 @app.route('/reload/recent')
 def reload():
-    try:
-        if not(request.args.get('last-fetch')):
-            return 'Invalid Request'
-        last_fetch = int(request.args.get('last-fetch'))/1000
-    except ValueError:
+    if not('last-fetch' in request.args and request.args.get('last-fetch').isdigit()):
         return 'Invalid Request'
+    last_fetch = int(request.args.get('last-fetch'))/1000
     recent = {}
     for printer in printer_dict:
-        recent[printer] = list(filter(lambda item: item[1] > last_fetch, printer_dict[printer]))
+        recent[printer] = [job for job in printer_dict[printer] if job[1] > last_fetch]
     return jsonify(recent)
 
 if DEV_MODE:

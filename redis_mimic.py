@@ -7,7 +7,7 @@ def randUsername():
     return ''.join([random.choice(string.ascii_lowercase) for _ in range(10)])
 
 def addJob():
-    rand = random.randint(0, len(printers)-1)
+    rand = random.randrange(len(printers))
     return {
         'channel': printers[rand].encode(encoding='UTF-8'),
         'data': randUsername().encode(encoding='UTF-8')

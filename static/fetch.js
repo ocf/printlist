@@ -37,8 +37,8 @@ class AutoReload {
         setInterval(()=>this.update(this.last_fetch), RELOAD_TIME);
     }
     async update(last_fetch = 0){
-        console.log(last_fetch);
-        let data = await (await fetch(`/reload/recent?last-fetch=${last_fetch}`)).json();
+        let fetched = await fetch(`/reload/recent?last-fetch=${last_fetch}`);
+        let data = await fetched.json();
         this.last_fetch = Date.now();
         if (!this.printers) {
             this.printers = {};
