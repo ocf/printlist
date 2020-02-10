@@ -97,8 +97,8 @@ def printlist(printer):
 
 @app.route('/reload/recent')
 def reload():
-    if not('last-fetch' in request.args and request.args.get('last-fetch').isdigit()):
-        return 'Invalid Request'
+    if not request.args.get('last-fetch', '').isdigit():
+        return 'Invalid Request', 400
     last_fetch = int(request.args.get('last-fetch'))/1000
     recent = {}
     for printer in printer_dict:

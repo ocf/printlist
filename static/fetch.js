@@ -34,7 +34,7 @@ class AutoReload {
         this.printers;
         this.last_fetch = 0;
         this.update(this.last_fetch);
-        setInterval(()=>this.update(this.last_fetch), RELOAD_TIME);
+        setInterval(() => this.update(this.last_fetch), RELOAD_TIME);
     }
     async update(last_fetch = 0){
         let fetched = await fetch(`/reload/recent?last-fetch=${last_fetch}`);
@@ -50,7 +50,7 @@ class AutoReload {
         for (let printer_name in data) {
             let parent = document.querySelector(`.${printer_name} h1`);
             data[printer_name].sort((a, b) => a[1] - b[1])
-            .forEach(item=>{
+            .forEach(item => {
                 let job = new Job(this, printer_name, item[0], item[1]);
                 this.printers[printer_name].set(job.symbol, job);
                 parent.after(job.element);

@@ -9,8 +9,8 @@ def randUsername():
 def addJob():
     rand = random.randrange(len(printers))
     return {
-        'channel': printers[rand].encode(encoding='UTF-8'),
-        'data': randUsername().encode(encoding='UTF-8')
+        'channel': printers[rand].encode(),
+        'data': randUsername().encode()
     }
 
 def mimic_sub(*args):
