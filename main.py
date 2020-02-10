@@ -7,7 +7,6 @@ import threading
 from configparser import ConfigParser
 from flask import Flask
 from flask import render_template
-from flask import jsonify
 import sys
 
 # Contains Redis secrets
@@ -41,7 +40,6 @@ def read_config():
 
 printer_dict = {'printer-logjam': [], 'printer-pagefault': [], 'printer-papercut': []}
 printer_names = [('printer-papercut', 'papercut'), ('printer-logjam', 'logjam'), ('printer-pagefault', 'pagefault')]
-last_fetch = False
 
 def push_user(printer, username):
     printer_dict[printer].append(username)
@@ -87,25 +85,14 @@ app = create_app()
 
 @app.route('/home')
 def home():
-    last_fetch = time.time()
     return render_template('full.html', title = 'home', print_list = printer_dict, printer_names = printer_names)
 
-# Deprecated
+
 @app.route('/printer/<string:printer>')
 def printlist(printer):
     p = 'printer-' + printer
     requested_list = printer_dict[p]
     return render_template('printer.html', title = 'printer', requested_list = set(requested_list), printer = printer)
-
-@app.route('/reload/recent')
-def reload():
-    recent = {}
-    global last_fetch
-    if last_fetch:
-        for printer in printer_dict:
-            recent[printer] = list(filter(lambda item: item[1] > last_fetch, printer_dict[printer]))
-    last_fetch = time.time()
-    return jsonify(recent)
 
 if DEV_MODE:
     app.run(port=3000)
