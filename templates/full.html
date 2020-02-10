@@ -6,7 +6,7 @@
 <link href="https://fonts.googleapis.com/css?family=Fira+Sans:400,600,700&display=swap" rel="stylesheet">
 <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 <title>Print List</title>
-<meta http-equiv="refresh" content="5" name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 html {
@@ -110,7 +110,7 @@ footer {
 </header>
 <div class="dashboard">
   {% for printer in printer_names %}
-  <div class="printlist">
+  <div class="printlist {{printer[0]}}">
     <h1>{{printer[1]}}</h1>
     {% for user in print_list[printer[0]]|reverse %}
     <div class="printlist-user">
@@ -128,7 +128,7 @@ footer {
   If you don't see your job <b>printed out</b>, please contact a staffer. <br/>
   <i>Thank you for flying OCF!</i>
 </footer>
-
+<script type="text/javascript" src="{{ url_for('static', filename='fetch.js') }}"></script>
 <!--
 <script>
 (function(){
