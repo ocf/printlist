@@ -8,6 +8,7 @@ from configparser import ConfigParser
 from flask import Flask
 from flask import render_template
 from flask import jsonify
+from flask import request
 import sys
 
 # Contains Redis secrets
@@ -41,7 +42,6 @@ def read_config():
 
 printer_dict = {'printer-logjam': [], 'printer-pagefault': [], 'printer-papercut': []}
 printer_names = [('printer-papercut', 'papercut'), ('printer-logjam', 'logjam'), ('printer-pagefault', 'pagefault')]
-last_fetch = False
 
 def push_user(printer, username):
     printer_dict[printer].append(username)
@@ -77,7 +77,7 @@ def create_app():
     return app
 
 if DEV_MODE:
-    print('Debug Mode Enabled')
+    print('Developer Mode Enabled')
     read_config = lambda: (None, None)
     from redis_mimic import mimic_sub
     subscribe = mimic_sub
@@ -86,7 +86,6 @@ app = create_app()
 
 @app.route('/home')
 def home():
-    last_fetch = time.time()
     return render_template('full.html', title = 'home', print_list = printer_dict, printer_names = printer_names)
 
 # Deprecated
@@ -98,15 +97,19 @@ def printlist(printer):
 
 @app.route('/reload/recent')
 def reload():
+    try:
+        if not(request.args.get('last-fetch')):
+            return 'Invalid Request'
+        last_fetch = int(request.args.get('last-fetch'))/1000
+    except ValueError:
+        return 'Invalid Request'
     recent = {}
-    global last_fetch
-    if last_fetch:
-        for printer in printer_dict:
-            recent[printer] = list(filter(lambda item: item[1] > last_fetch, printer_dict[printer]))
-    last_fetch = time.time()
+    for printer in printer_dict:
+        recent[printer] = list(filter(lambda item: item[1] > last_fetch, printer_dict[printer]))
     return jsonify(recent)
 
 if DEV_MODE:
+    app.config.update(TEMPLATES_AUTO_RELOAD = True)
     app.run(port=3000)
     while True:
         try:

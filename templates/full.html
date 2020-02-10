@@ -129,46 +129,5 @@ footer {
   <i>Thank you for flying OCF!</i>
 </footer>
 <script type="text/javascript" src="{{ url_for('static', filename='fetch.js') }}"></script>
-<!--
-<script>
-(function(){
-	const RELOAD_TIME = 5000;
-	setInterval(async()=>{
-		let data = await reload();
-		for (let printer_name in data){
-			queue(printer_name, data[printer_name]);
-		}
-	}, RELOAD_TIME);
-})();
-​
-function queue(printer_name, data){
-	data.sort((a, b)=>{
-		// Sorts by date
-		return a[1]-b[1];
-	})
-	.map(item=>([item[0], new Date(item[1])]))
-	.forEach(item=>{
-		// Do whatever you need, [username, date as Date Object]
-	});
-}
-​
-function reload(){
-	return new Promise(async (resolve, reject)=>{		
-		var temp = new XMLHttpRequest();
-		temp.open('GET','/reload/recent', true);
-		temp.send();
-		temp.onreadystatechange = ()=>{
-			if (temp.readyState === 4) {
-				resolve(temp.response);
-        // TODO: JSON parsing
-			}
-		};
-	});
-}
-
-</script>
--->
-
-
 </body>
 </html>
