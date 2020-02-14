@@ -1,14 +1,15 @@
 import functools
+import json
 import os
 import sys
-import time
-import redis
 import threading
-import json
+import time
 from configparser import ConfigParser
+
+import redis
 from flask import Flask
-from flask import render_template
 from flask import jsonify
+from flask import render_template
 from flask import request
 
 # Contains Redis secrets
@@ -39,28 +40,31 @@ print_jobs = {
 }
 
 persist = 180
-persist_completed = 60
+persist_completed = 1
 
-class Job:
-    @staticmethod
+
+class Job():
     def cleanup():
+        def evals(job):
+            if job.currentStatus() == 0:
+                if job.last_updated+persist_completed < time.time():
+                    return False
+            else:
+                if job.last_updated+persist < time.time():
+                    return False
+            return True
         for printer in print_jobs:
-            for job in printer:
-                if job.currentStatus() == 0:
-                    if job.time+persist_completed < time.time():
-                        del job
-                else:
-                    if job.time+persist < time.time():
-                        del job
-    @staticmethod
+            print_jobs[printer] = {print_id: print_job
+                for print_id, print_job in print_jobs[printer].items() if evals(print_job)}
+
     def getRecent(time):
         jobs = {}
         for printer in print_jobs:
             jobs[printer] = {}
-            jobs[printer] = {job: print_jobs[printer][job] for job in print_jobs[printer] if job.last_updated > time}
+            jobs[printer] = {job: print_jobs[printer][job].toJSON()
+                for job in print_jobs[printer] if print_jobs[printer][job].last_updated > time}
         return jobs
 
-    @staticmethod
     def add(printer_name, username, time, status, job_id):
         if job_id in print_jobs[printer_name]:
             return print_jobs[printer_name][job_id].update(username, status, time)
@@ -75,14 +79,24 @@ class Job:
 
     def update(self, username, status, time):
         if username != self.username:
-            print("Conflict: Job#" + job_id + " | " + self.username + " vs " + username);
+            print("Conflict: Job#" + job_id + " | " +
+                  self.username + " vs " + username)
             return False
         self.statusQueue.append((status, time))
         self.last_updated = time
         return True
 
     def currentStatus(self):
-        return self.statusQueue[-1]
+        return self.statusQueue[-1][0]
+
+    def toJSON(self):
+        temp = {
+            'username': self.username,
+            'id': self.id,
+            'last_updated': self.last_updated,
+            'statusQueue': self.statusQueue
+        }
+        return temp
 
 
 def subscribe(host, password, *channels):
@@ -103,7 +117,8 @@ def read_config():
 def monitor_printer():
     host, password = read_config()
 
-    s = subscribe(host, password, 'printer-logjam', 'printer-pagefault', 'printer-papercut')
+    s = subscribe(host, password, 'printer-logjam',
+                  'printer-pagefault', 'printer-papercut')
     while True:
         message = s.get_message()
         if message and 'data' in message:
@@ -112,10 +127,10 @@ def monitor_printer():
                 print_job = json.loads(message['data'])
                 Job.add(
                     printer_name=printer_name,
-                    username=print_job.user,
-                    time=print_job.time,
-                    status=print_job.status,
-                    job_id=print_job.id
+                    username=print_job['user'],
+                    time=print_job['time'],
+                    status=print_job['status'],
+                    job_id=print_job['id']
                 )
             except ValueError:
                 print('Unable to parse JSON')
@@ -123,39 +138,43 @@ def monitor_printer():
 
 def create_app():
     app = Flask(__name__)
-    monitor_process = threading.Thread(target = monitor_printer)
+    monitor_process = threading.Thread(target=monitor_printer)
     monitor_process.daemon = DEV_MODE
     monitor_process.start()
     return app
 
+
 if DEV_MODE:
     print('Developer Mode Enabled')
-    read_config = lambda: (None, None)
+    def read_config(): return (None, None)
     from redis_mimic import mimic_sub
     subscribe = mimic_sub
 
 app = create_app()
 
+
 @app.route('/home')
 def home():
-    return render_template('full.html', title = 'home', print_list = printer_dict, printer_names = printer_names)
+    return render_template('full.html', title='home', print_list=printer_dict, printer_names=printer_names)
 
 # Deprecated
 @app.route('/printer/<string:printer>')
 def printlist(printer):
     p = 'printer-' + printer
     requested_list = printer_dict[p]
-    return render_template('printer.html', title = 'printer', requested_list = set(requested_list), printer = printer)
+    return render_template('printer.html', title='printer', requested_list=set(requested_list), printer=printer)
+
 
 @app.route('/reload/recent')
 def reload():
     if not request.args.get('last-fetch', '').isdigit():
         return 'Invalid Request', 400
     last_fetch = int(request.args.get('last-fetch'))/1000
-    return jsonify(Job.getrecent(last_fetch))
+    return jsonify(Job.getRecent(last_fetch))
+
 
 if DEV_MODE:
-    app.config.update(TEMPLATES_AUTO_RELOAD = True, SEND_FILE_MAX_AGE_DEFAULT=0)
+    app.config.update(TEMPLATES_AUTO_RELOAD=True, SEND_FILE_MAX_AGE_DEFAULT=0)
     app.run(port=3000)
     while True:
         try:
