@@ -46,23 +46,23 @@ persist_completed = 1
 class Job():
     def cleanup():
         def evals(job):
-            if job.currentStatus() == 0:
+            if job.current_status() == 0:
                 if job.last_updated+persist_completed < time.time():
                     return False
             else:
                 if job.last_updated+persist < time.time():
                     return False
             return True
+        
         for printer in print_jobs:
             print_jobs[printer] = {print_id: print_job
                 for print_id, print_job in print_jobs[printer].items() if evals(print_job)}
 
-    def getRecent(time):
+    def get_recent(time):
         jobs = {}
-        for printer in print_jobs:
-            jobs[printer] = {}
-            jobs[printer] = {job: print_jobs[printer][job].toJSON()
-                for job in print_jobs[printer] if print_jobs[printer][job].last_updated > time}
+        for printer_name, printer in print_jobs.items():
+            jobs[printer_name] = {}
+            jobs[printer_name] = [job.toJSON() for job_id, job in printer.items() if job.last_updated > time]
         return jobs
 
     def add(printer_name, username, time, status, job_id):
@@ -75,26 +75,26 @@ class Job():
         self.username = username
         self.id = job_id
         self.last_updated = time
-        self.statusQueue = [(status, time)]
+        self.status_queue = [(status, time)]
 
     def update(self, username, status, time):
         if username != self.username:
             print("Conflict: Job#" + job_id + " | " +
                   self.username + " vs " + username)
             return False
-        self.statusQueue.append((status, time))
+        self.status_queue.append((status, time))
         self.last_updated = time
         return True
 
-    def currentStatus(self):
-        return self.statusQueue[-1][0]
+    def current_status(self):
+        return self.status_queue[-1][0]
 
     def toJSON(self):
         temp = {
             'username': self.username,
             'id': self.id,
             'last_updated': self.last_updated,
-            'statusQueue': self.statusQueue
+            'status': self.current_status()
         }
         return temp
 
@@ -155,7 +155,7 @@ app = create_app()
 
 @app.route('/home')
 def home():
-    return render_template('full.html', title='home', print_list=printer_dict, printer_names=printer_names)
+    return render_template('full.html', title='home', print_list=print_jobs, printer_names=printer_names)
 
 # Deprecated
 @app.route('/printer/<string:printer>')
@@ -170,7 +170,7 @@ def reload():
     if not request.args.get('last-fetch', '').isdigit():
         return 'Invalid Request', 400
     last_fetch = int(request.args.get('last-fetch'))/1000
-    return jsonify(Job.getRecent(last_fetch))
+    return jsonify(Job.get_recent(last_fetch))
 
 
 if DEV_MODE:
