@@ -1,0 +1,141 @@
+@import url("https://fonts.googleapis.com/css?family=Fira+Sans&display=swap");
+
+* {
+    font-size: 1vw;
+    font-family: "Fira Sans";
+    text-align: center;
+}
+
+b {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0;
+    padding-bottom: 1rem;
+    padding-top: 1rem;
+}
+
+h1 {
+    font-size: 8rem;
+    font-weight: bold;
+}
+
+h2 {
+    font-size: 5rem;
+    font-weight: bold;
+}
+
+i {
+    font-size: 1.5rem;
+    font-style: italic;
+    margin: 0;
+    padding-bottom: 1rem;
+    padding-top: 1rem;
+}
+
+p {
+    font-size: 1.5rem;
+    margin: 0;
+    padding: 1rem;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#header {
+    background-color: #de9;
+
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+
+    flex-shrink: 0;
+}
+
+#ocf-logo {
+    width: 25rem;
+}
+
+#dashboard {
+    display: flex;
+    justify-content: space-between;
+
+    flex-grow: 1000000;
+    padding: 0.5rem;
+}
+
+.printer {
+    /* border: 0.1rem black solid; */
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    width: 33%;
+}
+
+.printlist {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    overflow-y: scroll;
+}
+
+.printlist::-webkit-scrollbar {
+    display: none;
+}
+
+.printlist-entry {
+    background-color: lime;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.status-pending {
+    background-color: yellow;
+}
+
+.status-error {
+    background-color: red;
+}
+
+.printlist-entry > * {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.time-entry {
+    font-family: monospace;
+}
+
+.username-entry {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.status-entry {
+}
+
+#footer {
+    background-color: #0f4d92;
+    color: white;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
