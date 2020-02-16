@@ -1,5 +1,7 @@
 const RELOAD_TIME = 3000; 
-const PERSISTENCE_TIME = 1000;
+const PERSISTENCE_TIME_COMPLETE = 1000;
+const PERSISTENCE_TIME_PENDING = 5000;
+const PERSISTENCE_TIME_ERROR = 3000;
 
 const PrintJob = {
     COMPLETED: 0,
@@ -13,29 +15,34 @@ class Job {
     constructor(printer, job) {
         this.printer = printer;
         console.log(job);
-        this.last_updated = new Date(job.last_updated*1000);
         this.username = job.username;
         this.id = job.id;
-        this.status = job.status;
-        this.element = this.createElement();
+        this.createElement();
+        this.update(job);
     }
     update(job) {
         this.status = job.status;
+        this.last_updated = new Date(job.last_updated*1000);
         switch (this.status) {
             case PrintJob.COMPLETED:
                 // TODO: Fill out
+                this.child.style.color = 'green';
                 break;
             case PrintJob.PENDING:
                 // TODO: Fill out
+                this.child.style.color = 'yellow';
                 break;
             case PrintJob.FILE_ERROR:
                 // TODO: Fill out
+                this.child.style.color = 'red';
                 break;
             case PrintJob.QUOTA_LIMIT:
                 // TODO: Fill out
+                this.child.style.color = 'red';
                 break;
             case PrintJob.JOB_ERROR:
                 // TODO: Fill out
+                this.child.style.color = 'red';
                 break;
             default: break;
         }        
@@ -48,25 +55,36 @@ class Job {
         name.classList.add('printlist-user-handle');
         name.innerText = this.username;
         wrapper.appendChild(name);
-        return wrapper;
+        this.element = wrapper;
+        this.child = name;
+        //return wrapper;
     }
     clean(time){
+        const error = () => {
+            if (time - this.last_updated.getTime() > PERSISTENCE_TIME_ERROR)
+                this.remove();
+        }
         switch (this.status) {
             case PrintJob.COMPLETED:
-                if (time - this.last_updated.getTime() > PERSISTENCE_TIME)
+                if (time - this.last_updated.getTime() > PERSISTENCE_TIME_COMPLETE)
                     this.remove();
                 break;
             case PrintJob.PENDING:
                 // TODO: Fill out
+                if (time - this.last_updated.getTime() > PERSISTENCE_TIME_PENDING)
+                    this.remove();
                 break;
             case PrintJob.FILE_ERROR:
                 // TODO: Fill out
+                error();
                 break;
             case PrintJob.QUOTA_LIMIT:
                 // TODO: Fill out
+                error();
                 break;
             case PrintJob.JOB_ERROR:
                 // TODO: Fill out
+                error();
                 break;
             default: break;
         }
