@@ -1,7 +1,7 @@
 const RELOAD_TIME = 3000; 
-const PERSISTENCE_TIME_COMPLETE = 10000;
-const PERSISTENCE_TIME_PENDING = 60000;
-const PERSISTENCE_TIME_ERROR = 60000;
+const PERSISTENCE_TIME_COMPLETE = 180000;
+const PERSISTENCE_TIME_PENDING = 300000;
+const PERSISTENCE_TIME_ERROR = 300000;
 
 const PrintJob = {
     PARSE(code) {
@@ -114,20 +114,16 @@ class Job {
                     this.remove();
                 break;
             case PrintJob.PENDING.CODE:
-                // TODO: Fill out
                 if (time - this.last_updated.getTime() > PERSISTENCE_TIME_PENDING)
                     this.remove();
                 break;
             case PrintJob.FILE_ERROR.CODE:
-                // TODO: Fill out
                 error();
                 break;
             case PrintJob.QUOTA_LIMIT.CODE:
-                // TODO: Fill out
                 error();
                 break;
             case PrintJob.JOB_ERROR.CODE:
-                // TODO: Fill out
                 error();
                 break;
             default: break;
@@ -191,7 +187,6 @@ class AutoReload {
     async update(last_fetch = 0){
         let fetched = await fetch(`/reload/recent?last-fetch=${last_fetch}`);
         let allPrinters = await fetched.json();
-        console.log('REPLY:', allPrinters);
         this.last_fetch = Date.now();
         if (!this.printers) {
             this.printers = {};

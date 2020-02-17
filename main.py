@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 from configparser import ConfigParser
+from enum import Enum
 
 import redis
 from flask import Flask
@@ -28,6 +29,13 @@ redis_connection = functools.partial(
     password=None
 )
 
+class PrintJob(Enum):
+    COMPLETED = 0
+    PENDING = 1
+    FILE_ERROR = 2
+    QUOTA_LIMIT = 3
+    JOB_ERROR = 4
+
 printer_names = {
     'printer-papercut': 'papercut',
     'printer-logjam': 'logjam',
@@ -41,18 +49,19 @@ print_jobs = {
 
 persist = 180
 persist_completed = 60
+persist_error = 180
 
 
 class Job():
     def cleanup():
         def evals(job):
-            if job.current_status() == 0:
-                if job.last_updated+persist_completed < time.time():
-                    return False
+            status = job.current_status()
+            if status == PrintJob.COMPLETED:
+                return job.last_updated + persist_completed > time.time()
+            elif status == PrintJob.PENDING:
+                return job.last_updated + persist > time.time()
             else:
-                if job.last_updated+persist < time.time():
-                    return False
-            return True
+                return job.last_updated + persist_error > time.time()
         
         for printer in print_jobs:
             print_jobs[printer] = {print_id: print_job
@@ -63,10 +72,6 @@ class Job():
         for printer_name, printer in print_jobs.items():
             jobs[printer_name] = {}
             jobs[printer_name] = [job.toJSON() for job_id, job in printer.items() if job.last_updated > time]
-        print('reply')
-        print('-----')
-        print(jobs)
-        print()
         return jobs
 
     def add(printer_name, username, time, status, job_id):
@@ -159,14 +164,7 @@ app = create_app()
 
 @app.route('/home')
 def home():
-    return render_template('full.html', title='home', print_list=print_jobs, printer_names=printer_names)
-
-# Deprecated
-@app.route('/printer/<string:printer>')
-def printlist(printer):
-    p = 'printer-' + printer
-    requested_list = printer_dict[p]
-    return render_template('printer.html', title='printer', requested_list=set(requested_list), printer=printer)
+    return render_template('full.html', printer_names=printer_names)
 
 
 @app.route('/reload/recent')

@@ -171,7 +171,6 @@ body {
     flex-shrink: 0;
     font-family: monospace;
     letter-spacing: 0.1rem;
-    /*border-radius: 0.5rem;*/
     transition: background-color 1s, color 1s;
 }
 
@@ -188,15 +187,6 @@ body {
     border-radius: 0.5rem;
 }
 
-[status="completed"] {
-    /*color: #00cf1c;*/
-    background-color: rgba(110, 208, 103, 0.73);
-}
-
-[status="pending"] {
-    background-color: rgba(255, 238, 51, 1);
-}
-
 @keyframes shake {
     0% {
         transform: translateX(0);
@@ -210,6 +200,14 @@ body {
     100% {
         transform: translateX(0);
     }
+}
+
+[status="completed"] {
+    background-color: rgba(110, 208, 103, 0.73);
+}
+
+[status="pending"] {
+    background-color: rgba(255, 238, 51, 1);
 }
 
 [status="error"] {
