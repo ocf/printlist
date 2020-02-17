@@ -59,6 +59,9 @@ body {
     align-items: center;
 
     flex-shrink: 0;
+    box-shadow: 0 0.3rem 0.63rem rgba(0,0,0,0.16), 0 0.3rem 0.63rem rgba(0,0,0,0.23);
+    margin: 0.5rem;
+    border-radius: 0.5rem;
 }
 
 #ocf-logo {
@@ -71,16 +74,23 @@ body {
 
     flex-grow: 1000000;
     padding: 0.5rem;
+    background-color: #fbfbfb;
 }
 
 .printer {
-    /* border: 0.1rem black solid; */
-
     display: flex;
     flex-direction: column;
     align-items: center;
 
     width: 33%;
+}
+
+.printer-title {
+    color: black;
+    width: 90%;
+    box-shadow: 0 0.3rem 0.63rem rgba(0,0,0,0.16), 0 0.3rem 0.63rem rgba(0,0,0,0.23);
+    margin: 1rem 5%;
+    padding: 5rem 0;
 }
 
 .printlist {
@@ -94,41 +104,75 @@ body {
     display: none;
 }
 
+@keyframes enter {
+    from {
+        opacity: 0;
+        transform: translateX(-2rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes exit {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-2rem);
+    }
+}
+
+@keyframes exit-post {
+    from {
+        max-height: 2.5rem;
+    }
+    to {
+        max-height: 0;
+        margin: 0;
+    }
+}
+
 .printlist-entry {
-    background-color: lime;
     display: flex;
-    justify-content: space-between;
-    width: 100%;
-}
-
-.status-pending {
-    background-color: yellow;
-}
-
-.status-error {
-    background-color: red;
+    color: black;
+    width: 90%;
+    animation: enter 1s;
+    box-shadow: 0 0.3rem 0.63rem rgba(0,0,0,0.16), 0 0.3rem 0.63rem rgba(0,0,0,0.23);
+    margin: 0.5rem 5%;
+    overflow: hidden;
 }
 
 .printlist-entry > * {
     font-size: 1.5rem;
     font-weight: bold;
-    margin-bottom: 0.5rem;
-    margin-top: 0.5rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding: 0.5rem 1rem;
 }
 
 .time-entry {
     font-family: monospace;
+    flex-shrink: 0;
+    letter-spacing: -0.1rem;
 }
 
 .username-entry {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    letter-spacing: 0.1rem;
 }
 
 .status-entry {
+    margin: 0;
+    transition: color 1s;
+    flex-shrink: 0;
+    font-family: monospace;
+    letter-spacing: 0.1rem;
+    /*border-radius: 0.5rem;*/
+    transition: background-color 1s, color 1s;
 }
 
 #footer {
@@ -138,4 +182,50 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
+
+    box-shadow: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
+    margin: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+[status="completed"] {
+    /*color: #00cf1c;*/
+    background-color: rgba(110, 208, 103, 0.73);
+}
+
+[status="pending"] {
+    background-color: rgba(255, 238, 51, 1);
+}
+
+@keyframes shake {
+    0% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-0.5rem);
+    }
+    75% {
+        transform: translateX(5rem);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+[status="error"] {
+    background-color: rgba(255, 56, 56, 0.84);
+    color: white;
+    font-weight: 4000;
+    animation: shake 1s;
+}
+
+.printlist-null {
+    box-shadow: 0 0.3rem 0.63rem rgba(0,0,0,0.16), 0 0.3rem 0.63rem rgba(0,0,0,0.23);
+    margin: 0.5rem auto;
+    font-size: 1.5rem;
+    text-align: center;
+    display: block;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: rgba(0,0,0,0.1);
 }

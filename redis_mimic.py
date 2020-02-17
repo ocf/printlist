@@ -14,18 +14,19 @@ def newId():
 
 
 def randUsername():
-    return ''.join([random.choice(string.ascii_lowercase) for _ in range(10)])
+    return ''.join([random.choice(string.ascii_lowercase) for _ in range(20)])
 
 
 def addJob():
     rand = random.randrange(len(printers))
     tempId = newId()
-    tempStatus = random.randrange(5)
+    tempStatus = random.randrange(2)
     completeOne = random.randrange(2)
     if not(completeOne) and len(currentPending) != 0:
         completed = currentPending.pop(0)
         completed['data']['time'] = time.time()
         completed['data']['status'] = 0
+        print(completed['data'])
         completed['data'] = json.dumps(completed['data'])
         return completed
     else:
@@ -40,7 +41,6 @@ def addJob():
         }
         if tempStatus == 1:
             currentPending.append(tempData)
-        print(currentPending)
         returnedData = copy.deepcopy(tempData)
         returnedData['data'] = json.dumps(returnedData['data'])
         return returnedData

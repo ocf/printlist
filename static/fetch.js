@@ -1,63 +1,107 @@
 const RELOAD_TIME = 3000; 
-const PERSISTENCE_TIME_COMPLETE = 1000;
-const PERSISTENCE_TIME_PENDING = 5000;
-const PERSISTENCE_TIME_ERROR = 3000;
+const PERSISTENCE_TIME_COMPLETE = 10000;
+const PERSISTENCE_TIME_PENDING = 60000;
+const PERSISTENCE_TIME_ERROR = 60000;
 
 const PrintJob = {
-    COMPLETED: 0,
-    PENDING: 1,
-    FILE_ERROR: 2,
-    QUOTA_LIMIT: 3,
-    JOB_ERROR: 4
+    PARSE(code) {
+        for (let key in PrintJob) {
+            if (PrintJob[key].CODE === code) return PrintJob[key]
+        }
+    },
+    COMPLETED: {
+        CODE: 0,
+        ATTR: 'completed',
+        MSG: 'SUCCESS'
+    },
+    PENDING: {
+        CODE: 1,
+        ATTR: 'pending',
+        MSG: 'PENDING'
+    },
+    FILE_ERROR: {
+        CODE: 2,
+        ATTR: 'error',
+        MSG: 'FAILURE'
+    },
+    QUOTA_LIMIT: {
+        CODE: 3,
+        ATTR: 'error',
+        MSG: 'FAILURE'
+    },
+    JOB_ERROR: {
+        CODE: 4,
+        ATTR: 'error',
+        MSG: 'FAILURE'
+    }
+}
+
+
+function _element(tag, classList, attributes, innerText){
+    let temp = document.createElement(tag);
+    if (classList && !(classList instanceof Array) && typeof classList === 'string') classList = [classList];
+    else classList = [];
+    if (attributes && attributes instanceof Array) {
+        let temp = {};
+        attributes.forEach(item => {
+            temp[item] = true;
+        });
+        attributes = temp;
+    } else if (attributes && typeof attributes === 'string') {
+        attributes = {[attributes]: true}
+    } else {
+        attributes = {};
+    }
+    classList.forEach(className => temp.classList.add(className));
+    for (let key in attributes) {
+        temp.setAttribute(key, attributes[key] && typeof attributes[key] === 'boolean' ? '' : String(attributes[key]));
+    }
+    if (innerText) temp.innerText = innerText;
+    return temp;
 }
 
 class Job {
     constructor(printer, job) {
         this.printer = printer;
-        console.log(job);
         this.username = job.username;
         this.id = job.id;
+        this.last_updated = new Date(job.last_updated*1000);
         this.createElement();
         this.update(job);
     }
     update(job) {
         this.status = job.status;
         this.last_updated = new Date(job.last_updated*1000);
-        switch (this.status) {
-            case PrintJob.COMPLETED:
-                // TODO: Fill out
-                this.child.style.color = 'green';
-                break;
-            case PrintJob.PENDING:
-                // TODO: Fill out
-                this.child.style.color = 'yellow';
-                break;
-            case PrintJob.FILE_ERROR:
-                // TODO: Fill out
-                this.child.style.color = 'red';
-                break;
-            case PrintJob.QUOTA_LIMIT:
-                // TODO: Fill out
-                this.child.style.color = 'red';
-                break;
-            case PrintJob.JOB_ERROR:
-                // TODO: Fill out
-                this.child.style.color = 'red';
-                break;
-            default: break;
-        }        
+        let stat = PrintJob.PARSE(this.status);
+        this.entry.status.innerText = stat.MSG;
+        this.entry.status.setAttribute('status', stat.ATTR);
+    }
+    getTime() {
+        const pad = (str, len) => {
+            str = String(str);
+            while (str.length < len) str = '0' + str;
+            return str;
+        }
+        let minutes = pad(this.last_updated.getMinutes(), 2);
+        let hours = pad(this.last_updated.getHours(), 2);
+        let AM = 'AM';
+        if (hours >= 13) {
+            AM = 'PM';
+            hours-=12
+        }
+        if (hours === 0) hours = 12;
+        return `${hours}:${minutes} ${AM}`;
     }
     createElement(){
-        // TODO : Modify for status codes
-        let wrapper = document.createElement('div');
-        wrapper.classList.add('printlist-user');
-        let name = document.createElement('div');
-        name.classList.add('printlist-user-handle');
-        name.innerText = this.username;
-        wrapper.appendChild(name);
-        this.element = wrapper;
-        this.child = name;
-        //return wrapper;
+        this.entry = {
+            wrapper: _element('div', 'printlist-entry'),
+            time: _element('div', 'time-entry', null, `${this.getTime()}`),
+            username: _element('div', 'username-entry', null, this.username),
+            status: _element('div', 'status-entry')
+        };
+        this.entry.wrapper.appendChild(this.entry.time);
+        this.entry.wrapper.appendChild(this.entry.status);        
+        this.entry.wrapper.appendChild(this.entry.username);
     }
     clean(time){
         const error = () => {
@@ -65,24 +109,24 @@ class Job {
                 this.remove();
         }
         switch (this.status) {
-            case PrintJob.COMPLETED:
+            case PrintJob.COMPLETED.CODE:
                 if (time - this.last_updated.getTime() > PERSISTENCE_TIME_COMPLETE)
                     this.remove();
                 break;
-            case PrintJob.PENDING:
+            case PrintJob.PENDING.CODE:
                 // TODO: Fill out
                 if (time - this.last_updated.getTime() > PERSISTENCE_TIME_PENDING)
                     this.remove();
                 break;
-            case PrintJob.FILE_ERROR:
+            case PrintJob.FILE_ERROR.CODE:
                 // TODO: Fill out
                 error();
                 break;
-            case PrintJob.QUOTA_LIMIT:
+            case PrintJob.QUOTA_LIMIT.CODE:
                 // TODO: Fill out
                 error();
                 break;
-            case PrintJob.JOB_ERROR:
+            case PrintJob.JOB_ERROR.CODE:
                 // TODO: Fill out
                 error();
                 break;
@@ -91,9 +135,17 @@ class Job {
     }
     remove(){
         this.printer.jobs.delete(this.id);
-        if (this.element) {
-            this.element.remove();
-            delete this.element;
+        if (this.entry) {
+            let temp = this.entry.wrapper;
+            temp.style.animation = "exit 1s";
+            temp.addEventListener('animationend', ()=>{
+                temp.style.opacity = 0;
+                temp.style.animation = 'exit-post 1s';
+                temp.addEventListener('animationend', ()=>{
+                    temp.remove();
+                })
+            });
+            delete this.entry;
         }
     }
 }
@@ -101,19 +153,17 @@ class Job {
 class Printer {
     constructor(printer_name) {
         this.name = printer_name;
-        this.reference = document.querySelector(`.${printer_name} h1`);
+        this.reference = document.querySelector(`#${printer_name} .printlist`);
         this.jobs = new Map();
         this.updateSize();
     }
     clean(currTime) {
-        console.log('clean')
         this.jobs.forEach(job => job.clean(currTime));
     }
     updateSize() {
         if (this.jobs.size === 0 && !this.nullElement) {
-            this.nullElement = this.createNull();
-            console.log(this.reference);
-            this.reference.after(this.nullElement);
+            this.nullElement = _element('div', 'printlist-null', null, '\ud83d\ude30 There are no print jobs. \ud83d\ude30');
+            this.reference.appendChild(this.nullElement);
         } else if (this.jobs.size !== 0) {
             if (this.nullElement) {
                 this.nullElement.remove();
@@ -123,16 +173,11 @@ class Printer {
     }
     addJob(job) {
         if (this.jobs.has(job.id))
-            return this.jobs.get(job.id).update();
+            return this.jobs.get(job.id).update(job);
         let newJob = new Job(this, job);
-        this.reference.after(newJob.element);
+        if (!this.reference.firstChild) this.reference.appendChild(newJob.entry.wrapper);
+        else this.reference.firstChild.before(newJob.entry.wrapper);
         return this.jobs.set(job.id, newJob);
-    }
-    createNull(){
-        let nullDiv = document.createElement('div');
-        nullDiv.classList.add('printlist-null');
-        nullDiv.innerText = '(there are no jobs printing)';
-        return nullDiv;        
     }
 }
 
@@ -146,6 +191,7 @@ class AutoReload {
     async update(last_fetch = 0){
         let fetched = await fetch(`/reload/recent?last-fetch=${last_fetch}`);
         let allPrinters = await fetched.json();
+        console.log('REPLY:', allPrinters);
         this.last_fetch = Date.now();
         if (!this.printers) {
             this.printers = {};

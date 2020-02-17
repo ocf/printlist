@@ -40,7 +40,7 @@ print_jobs = {
 }
 
 persist = 180
-persist_completed = 1
+persist_completed = 60
 
 
 class Job():
@@ -63,6 +63,10 @@ class Job():
         for printer_name, printer in print_jobs.items():
             jobs[printer_name] = {}
             jobs[printer_name] = [job.toJSON() for job_id, job in printer.items() if job.last_updated > time]
+        print('reply')
+        print('-----')
+        print(jobs)
+        print()
         return jobs
 
     def add(printer_name, username, time, status, job_id):
