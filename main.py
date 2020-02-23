@@ -47,37 +47,39 @@ print_jobs = {
     'printer-pagefault': {}
 }
 
-persist = 180
-persist_completed = 60
-persist_error = 180
+PERSIST = 180
+PERSIST_COMPLETED = 60
+PERSIST_ERROR = 180
 
 
 class Job():
     def cleanup():
-        def evals(job):
+        global print_jobs
+        def notdone(job):
             status = job.current_status()
             if status == PrintJob.COMPLETED:
-                return job.last_updated + persist_completed > time.time()
+                return job.last_updated + PERSIST_COMPLETED > time.time()
             elif status == PrintJob.PENDING:
-                return job.last_updated + persist > time.time()
-            else:
-                return job.last_updated + persist_error > time.time()
+                return job.last_updated + PERSIST > time.time()
+            return job.last_updated + PERSIST_ERROR > time.time()
         
-        for printer in print_jobs:
-            print_jobs[printer] = {print_id: print_job
-                for print_id, print_job in print_jobs[printer].items() if evals(print_job)}
+        print_jobs = {
+            printer: {
+                id: job for id, job in jobs.items() if notdone(job)
+            } for printer, jobs in print_jobs.items()
+        }
 
     def get_recent(time):
         jobs = {}
         for printer_name, printer in print_jobs.items():
-            jobs[printer_name] = {}
             jobs[printer_name] = [job.toJSON() for job_id, job in printer.items() if job.last_updated > time]
         return jobs
 
     def add(printer_name, username, time, status, job_id):
         if job_id in print_jobs[printer_name]:
-            return print_jobs[printer_name][job_id].update(username, status, time)
-        print_jobs[printer_name][job_id] = Job(username, time, status, job_id)
+            print_jobs[printer_name][job_id].update(username, status, time)
+        else:
+            print_jobs[printer_name][job_id] = Job(username, time, status, job_id)
         Job.cleanup()
 
     def __init__(self, username, time, status, job_id):
@@ -126,8 +128,7 @@ def read_config():
 def monitor_printer():
     host, password = read_config()
 
-    s = subscribe(host, password, 'printer-logjam',
-                  'printer-pagefault', 'printer-papercut')
+    s = subscribe(host, password, *([printer_name for printer_name in printer_names]))
     while True:
         message = s.get_message()
         if message and 'data' in message:
@@ -143,6 +144,8 @@ def monitor_printer():
                 )
             except ValueError:
                 print('Unable to parse JSON')
+            except KeyError:
+                print('Missing fields')
 
 
 def create_app():
@@ -162,7 +165,7 @@ if DEV_MODE:
 app = create_app()
 
 
-@app.route('/home')
+@app.route('/')
 def home():
     return render_template('full.html', printer_names=printer_names)
 

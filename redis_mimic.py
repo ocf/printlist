@@ -3,7 +3,11 @@ import random
 import string
 import time
 import copy
-printers = ('printer-logjam', 'printer-pagefault', 'printer-papercut')
+from config import Config
+
+CONFIG = Config('conf/mimic.yaml')
+
+printers = tuple('printer-' + name for name in CONFIG.printers.names)
 jobIds = 0
 currentPending = []
 
@@ -14,13 +18,13 @@ def newId():
 
 
 def randUsername():
-    return ''.join([random.choice(string.ascii_lowercase) for _ in range(20)])
+    return ''.join([random.choice(string.ascii_lowercase) for _ in range(CONFIG.redis_mimic.name_length)])
 
 
 def addJob():
     rand = random.randrange(len(printers))
     tempId = newId()
-    tempStatus = random.randrange(2)
+    tempStatus = random.randrange(CONFIG.redis_mimic.status_code_range)
     completeOne = random.randrange(2)
     if not(completeOne) and len(currentPending) != 0:
         completed = currentPending.pop(0)
@@ -53,5 +57,5 @@ def mimic_sub(*args):
 class mimic:
     @staticmethod
     def get_message():
-        time.sleep(1)
+        time.sleep(CONFIG.redis_mimic.refresh_rate)
         return addJob()
