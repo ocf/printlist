@@ -1,7 +1,4 @@
 const RELOAD_TIME = 3000; 
-const PERSISTENCE_TIME_COMPLETE = 180000;
-const PERSISTENCE_TIME_PENDING = 300000;
-const PERSISTENCE_TIME_ERROR = 300000;
 
 const PrintJob = {
     parse(code) {
@@ -92,23 +89,21 @@ class Job {
         this.entry.wrapper.appendChild(this.entry.username);
     }
     clean(time) {
-        const error = () => {
-            if (time - this.last_updated.getTime() > PERSISTENCE_TIME_ERROR)
-                this.remove();
-        }
         switch (this.status) {
             case PrintJob.COMPLETED.CODE:
-                if (time - this.last_updated.getTime() > PERSISTENCE_TIME_COMPLETE)
+                if (time - this.last_updated.getTime() > window.PERSIST_TIME.COMPLETED)
                     this.remove();
                 break;
             case PrintJob.PENDING.CODE:
-                if (time - this.last_updated.getTime() > PERSISTENCE_TIME_PENDING)
+                if (time - this.last_updated.getTime() > window.PERSIST_TIME.DEFAULT)
                     this.remove();
                 break;
             case PrintJob.FILE_ERROR.CODE:
             case PrintJob.QUOTA_LIMIT.CODE:
             case PrintJob.JOB_ERROR.CODE:
-            default: error();
+            default: 
+                if (time - this.last_updated.getTime() > window.PERSIST_TIME.ERROR)
+                    this.remove();
         }
     }
     remove() {
@@ -188,5 +183,16 @@ class AutoReload {
     }
 }
 (function() {
-    new AutoReload();
+    fetch('/configuration').then(res => {
+        res.json().then(config => {
+            for (time in config) {
+                config[time] = config[time]*1000;
+            }
+            console.log('Configuration of persistence time found');
+            Object.assign(window, {
+                PERSIST_TIME: config
+            });
+        new AutoReload();
+        });
+    });
 }());

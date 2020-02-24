@@ -12,6 +12,9 @@ from flask import Flask
 from flask import jsonify
 from flask import render_template
 from flask import request
+from config import Config
+
+CONFIG = Config()
 
 # Contains Redis secrets
 BROKER_AUTH = 'conf/broker.conf'
@@ -36,21 +39,7 @@ class PrintJob(Enum):
     QUOTA_LIMIT = 3
     JOB_ERROR = 4
 
-printer_names = {
-    'printer-papercut': 'papercut',
-    'printer-logjam': 'logjam',
-    'printer-pagefault': 'pagefault'
-}
-print_jobs = {
-    'printer-papercut': {},
-    'printer-logjam': {},
-    'printer-pagefault': {}
-}
-
-PERSIST = 180
-PERSIST_COMPLETED = 60
-PERSIST_ERROR = 180
-
+print_jobs = {name: {} for name in CONFIG.PRINTERS.NAMES}
 
 class Job():
     def cleanup():
@@ -58,10 +47,10 @@ class Job():
         def notdone(job):
             status = job.current_status()
             if status == PrintJob.COMPLETED:
-                return job.last_updated + PERSIST_COMPLETED > time.time()
+                return job.last_updated + CONFIG.PERSIST_TIME.COMPLETED > time.time()
             elif status == PrintJob.PENDING:
-                return job.last_updated + PERSIST > time.time()
-            return job.last_updated + PERSIST_ERROR > time.time()
+                return job.last_updated + CONFIG.PERSIST_TIME.DEFAULT > time.time()
+            return job.last_updated + CONFIG.PERSIST_TIME.ERROR > time.time()
         
         print_jobs = {
             printer: {
@@ -128,12 +117,12 @@ def read_config():
 def monitor_printer():
     host, password = read_config()
 
-    s = subscribe(host, password, *([printer_name for printer_name in printer_names]))
+    s = subscribe(host, password, *(['printer-' + printer_name for printer_name in CONFIG.PRINTERS.NAMES]))
     while True:
         message = s.get_message()
         if message and 'data' in message:
             try:
-                printer_name = message['channel']
+                printer_name = message['channel'].replace('printer-', '')
                 print_job = json.loads(message['data'])
                 Job.add(
                     printer_name=printer_name,
@@ -167,7 +156,7 @@ app = create_app()
 
 @app.route('/')
 def home():
-    return render_template('full.html', printer_names=printer_names)
+    return render_template('full.html', printer_names=CONFIG.PRINTERS.NAMES)
 
 
 @app.route('/reload/recent')
@@ -176,6 +165,10 @@ def reload():
         return 'Invalid Request', 400
     last_fetch = int(request.args.get('last-fetch'))/1000
     return jsonify(Job.get_recent(last_fetch))
+
+@app.route('/configuration')
+def config():
+    return jsonify(CONFIG.PERSIST_TIME.__dict__)
 
 
 if DEV_MODE:

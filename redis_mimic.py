@@ -7,7 +7,7 @@ from config import Config
 
 CONFIG = Config('conf/mimic.yaml')
 
-printers = tuple('printer-' + name for name in CONFIG.printers.names)
+printers = tuple('printer-' + name for name in CONFIG.PRINTERS.NAMES)
 jobIds = 0
 currentPending = []
 
@@ -18,13 +18,13 @@ def newId():
 
 
 def randUsername():
-    return ''.join([random.choice(string.ascii_lowercase) for _ in range(CONFIG.redis_mimic.name_length)])
+    return ''.join([random.choice(string.ascii_lowercase) for _ in range(CONFIG.REDIS_MIMIC.NAME_LENGTH)])
 
 
 def addJob():
     rand = random.randrange(len(printers))
     tempId = newId()
-    tempStatus = random.randrange(CONFIG.redis_mimic.status_code_range)
+    tempStatus = random.randrange(CONFIG.REDIS_MIMIC.STATUS_CODE_RANGE)
     completeOne = random.randrange(2)
     if not(completeOne) and len(currentPending) != 0:
         completed = currentPending.pop(0)
@@ -57,5 +57,5 @@ def mimic_sub(*args):
 class mimic:
     @staticmethod
     def get_message():
-        time.sleep(CONFIG.redis_mimic.refresh_rate)
+        time.sleep(CONFIG.REDIS_MIMIC.REFRESH_RATE)
         return addJob()

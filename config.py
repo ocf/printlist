@@ -5,6 +5,7 @@ def deepNamespace(dictionary):
 	for key in dictionary:
 		if isinstance(dictionary[key], dict):
 			dictionary[key] = deepNamespace(dictionary[key])
+		dictionary[key.upper()] = dictionary.pop(key)
 	return SimpleNamespace(**dictionary)
 
 def Config(*filenames):
