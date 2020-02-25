@@ -2,11 +2,12 @@ import yaml
 from types import SimpleNamespace
 
 def deepNamespace(dictionary):
+	newdict = {}
 	for key in dictionary:
 		if isinstance(dictionary[key], dict):
 			dictionary[key] = deepNamespace(dictionary[key])
-		dictionary[key.upper()] = dictionary.pop(key)
-	return SimpleNamespace(**dictionary)
+		newdict[key.upper()] = dictionary[key]
+	return SimpleNamespace(**newdict)
 
 def Config(*filenames):
 	with open('conf/default.yaml', 'r') as stream:
