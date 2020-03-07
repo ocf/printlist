@@ -1,0 +1,10 @@
+printers:
+  names:
+    - papercut
+    - logjam
+    - pagefault
+# Times are in seconds
+persist_time:
+  default: 180
+  completed: 60
+  error: 180

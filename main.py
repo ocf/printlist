@@ -1,15 +1,20 @@
 import functools
+import json
 import os
 import sys
-import time
-import redis
 import threading
+import time
 from configparser import ConfigParser
+from enum import Enum
+
+import redis
 from flask import Flask
-from flask import render_template
 from flask import jsonify
+from flask import render_template
 from flask import request
-import sys
+from config import Config
+
+CONFIG = Config()
 
 # Contains Redis secrets
 BROKER_AUTH = 'conf/broker.conf'
@@ -27,11 +32,88 @@ redis_connection = functools.partial(
     password=None
 )
 
+
+class PrintJob(Enum):
+    COMPLETED = 0
+    PENDING = 1
+    FILE_ERROR = 2
+    QUOTA_LIMIT = 3
+    JOB_ERROR = 4
+
+
+class Job():
+    """
+    print_jobs = {
+        'printer_name': {
+            'job_id': <Job Object> {
+                username: 'some username',
+                id: 'job_id',
+                last_updated: 'time of last update to status',
+                status: [('oldest status', 'timestamp'), ('newest status', 'timestamp')]
+            }
+        }
+    }
+    """
+    print_jobs = {name: {} for name in CONFIG.PRINTERS.NAMES}    
+    def cleanup():
+        def notdone(job):
+            status = job.current_status
+            if status == PrintJob.COMPLETED:
+                return job.last_updated + CONFIG.PERSIST_TIME.COMPLETED > time.time()
+            elif status == PrintJob.PENDING:
+                return job.last_updated + CONFIG.PERSIST_TIME.DEFAULT > time.time()
+            return job.last_updated + CONFIG.PERSIST_TIME.ERROR > time.time()
+        
+        Job.print_jobs = {
+            printer: {
+                id: job for id, job in jobs.items() if notdone(job)
+            } for printer, jobs in Job.print_jobs.items()
+        }
+
+    def get_recent(time):
+        jobs = {}
+        for printer_name, printer in Job.print_jobs.items():
+            jobs[printer_name] = [job.object_wrap() for job_id, job in printer.items() if job.last_updated > time]
+        return jobs
+
+    def process(printer_name, username, time, status, job_id):
+        if job_id in Job.print_jobs[printer_name]:
+            Job.print_jobs[printer_name][job_id].update(username, status, time)
+        else:
+            Job.print_jobs[printer_name][job_id] = Job(username, time, status, job_id)
+        Job.cleanup()
+
+    def __init__(self, username, time, status, job_id):
+        self.username = username
+        self.id = job_id
+        self.last_updated = time
+        self.current_status = status
+
+    def update(self, username, status, time):
+        if username != self.username:
+            print("Conflict: Job#" + job_id + " | " +
+                  self.username + " vs " + username)
+            return False
+        self.current_status = status
+        self.last_updated = time
+        return True
+
+    def object_wrap(self):
+        temp = {
+            'username': self.username,
+            'id': self.id,
+            'last_updated': self.last_updated,
+            'status': self.current_status
+        }
+        return temp
+
+
 def subscribe(host, password, *channels):
     rc = redis_connection(host=host, password=password)
     sub = rc.pubsub(ignore_subscribe_messages=True)
     sub.subscribe(channels)
     return sub
+
 
 def read_config():
     config = ConfigParser()
@@ -40,73 +122,66 @@ def read_config():
     password = config.get('broker', 'password')
     return host, password
 
-printer_dict = {'printer-logjam': [], 'printer-pagefault': [], 'printer-papercut': []}
-printer_names = [('printer-papercut', 'papercut'), ('printer-logjam', 'logjam'), ('printer-pagefault', 'pagefault')]
-
-def push_user(printer, username):
-    printer_dict[printer].append(username)
-
-def remove_user(printer, username):
-    printer_dict[printer].remove(username)
-
-def check_user(printer, username):
-    curr_time = time.time()
-    if curr_time - username[1] >= 180:
-        remove_user(printer, username)
 
 def monitor_printer():
     host, password = read_config()
 
-    s = subscribe(host, password, 'printer-logjam', 'printer-pagefault', 'printer-papercut')
+    s = subscribe(host, password, *(['printer-' + printer_name for printer_name in CONFIG.PRINTERS.NAMES]))
     while True:
         message = s.get_message()
         if message and 'data' in message:
-            printer = message['channel'].decode(encoding='UTF-8').replace('\n', ' ')
-            username = (message['data'].decode(encoding='UTF-8').replace('\n', ' '), time.time())
-            push_user(printer, username)
-            print(printer_dict) #temporary to see if things are working
-        for p in printer_dict.keys():
-            for u in printer_dict[p]:
-                check_user(p, u)
+            try:
+                printer_name = message['channel'].replace('printer-', '')
+                print_job = json.loads(message['data'])
+                Job.process(
+                    printer_name=printer_name,
+                    username=print_job['user'],
+                    time=print_job['time'],
+                    status=print_job['status'],
+                    job_id=print_job['id']
+                )
+            except ValueError:
+                print('Unable to parse JSON')
+            except KeyError:
+                print('Missing fields')
+
 
 def create_app():
     app = Flask(__name__)
-    monitor_process = threading.Thread(target = monitor_printer)
+    monitor_process = threading.Thread(target=monitor_printer)
     monitor_process.daemon = DEV_MODE
     monitor_process.start()
     return app
 
+
 if DEV_MODE:
     print('Developer Mode Enabled')
-    read_config = lambda: (None, None)
+    def read_config(): return (None, None)
     from redis_mimic import mimic_sub
     subscribe = mimic_sub
 
 app = create_app()
 
-@app.route('/home')
-def home():
-    return render_template('full.html', title = 'home', print_list = printer_dict, printer_names = printer_names)
 
-# Deprecated
-@app.route('/printer/<string:printer>')
-def printlist(printer):
-    p = 'printer-' + printer
-    requested_list = printer_dict[p]
-    return render_template('printer.html', title = 'printer', requested_list = set(requested_list), printer = printer)
+@app.route('/')
+def home():
+    return render_template('full.html', printer_names=CONFIG.PRINTERS.NAMES)
+
 
 @app.route('/reload/recent')
 def reload():
     if not request.args.get('last-fetch', '').isdigit():
         return 'Invalid Request', 400
     last_fetch = int(request.args.get('last-fetch'))/1000
-    recent = {}
-    for printer in printer_dict:
-        recent[printer] = [job for job in printer_dict[printer] if job[1] > last_fetch]
-    return jsonify(recent)
+    return jsonify(Job.get_recent(last_fetch))
+
+@app.route('/configuration')
+def config():
+    return jsonify(CONFIG.PERSIST_TIME.__dict__)
+
 
 if DEV_MODE:
-    app.config.update(TEMPLATES_AUTO_RELOAD = True, SEND_FILE_MAX_AGE_DEFAULT=0)
+    app.config.update(TEMPLATES_AUTO_RELOAD=True, SEND_FILE_MAX_AGE_DEFAULT=0)
     app.run(port=3000)
     while True:
         try:
