@@ -57,7 +57,7 @@ class Job():
     print_jobs = {name: {} for name in CONFIG.PRINTERS.NAMES}    
     def cleanup():
         def notdone(job):
-            status = job.status_queue
+            status = job.current_status
             if status == PrintJob.COMPLETED:
                 return job.last_updated + CONFIG.PERSIST_TIME.COMPLETED > time.time()
             elif status == PrintJob.PENDING:
@@ -87,14 +87,14 @@ class Job():
         self.username = username
         self.id = job_id
         self.last_updated = time
-        self.status_queue = status
+        self.current_status = status
 
     def update(self, username, status, time):
         if username != self.username:
             print("Conflict: Job#" + job_id + " | " +
                   self.username + " vs " + username)
             return False
-        self.status_queue = status
+        self.current_status = status
         self.last_updated = time
         return True
 
@@ -103,7 +103,7 @@ class Job():
             'username': self.username,
             'id': self.id,
             'last_updated': self.last_updated,
-            'status': self.status_queue
+            'status': self.current_status
         }
         return temp
 
