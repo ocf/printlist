@@ -32,6 +32,7 @@ redis_connection = functools.partial(
     password=None
 )
 
+
 class PrintJob(Enum):
     COMPLETED = 0
     PENDING = 1
@@ -39,11 +40,22 @@ class PrintJob(Enum):
     QUOTA_LIMIT = 3
     JOB_ERROR = 4
 
-print_jobs = {name: {} for name in CONFIG.PRINTERS.NAMES}
 
 class Job():
+    """
+    print_jobs = {
+        'printer_name': {
+            'job_id': <Job Object> {
+                username: 'some username',
+                id: 'job_id',
+                last_updated: 'time of last update to status',
+                status: [('oldest status', 'timestamp'), ('newest status', 'timestamp')]
+            }
+        }
+    }
+    """
+    print_jobs = {name: {} for name in CONFIG.PRINTERS.NAMES}    
     def cleanup():
-        global print_jobs
         def notdone(job):
             status = job.current_status()
             if status == PrintJob.COMPLETED:
@@ -52,23 +64,23 @@ class Job():
                 return job.last_updated + CONFIG.PERSIST_TIME.DEFAULT > time.time()
             return job.last_updated + CONFIG.PERSIST_TIME.ERROR > time.time()
         
-        print_jobs = {
+        Job.print_jobs = {
             printer: {
                 id: job for id, job in jobs.items() if notdone(job)
-            } for printer, jobs in print_jobs.items()
+            } for printer, jobs in Job.print_jobs.items()
         }
 
     def get_recent(time):
         jobs = {}
-        for printer_name, printer in print_jobs.items():
-            jobs[printer_name] = [job.toJSON() for job_id, job in printer.items() if job.last_updated > time]
+        for printer_name, printer in Job.print_jobs.items():
+            jobs[printer_name] = [job.object_wrap() for job_id, job in printer.items() if job.last_updated > time]
         return jobs
 
-    def add(printer_name, username, time, status, job_id):
-        if job_id in print_jobs[printer_name]:
-            print_jobs[printer_name][job_id].update(username, status, time)
+    def process(printer_name, username, time, status, job_id):
+        if job_id in Job.print_jobs[printer_name]:
+            Job.print_jobs[printer_name][job_id].update(username, status, time)
         else:
-            print_jobs[printer_name][job_id] = Job(username, time, status, job_id)
+            Job.print_jobs[printer_name][job_id] = Job(username, time, status, job_id)
         Job.cleanup()
 
     def __init__(self, username, time, status, job_id):
@@ -89,7 +101,7 @@ class Job():
     def current_status(self):
         return self.status_queue[-1][0]
 
-    def toJSON(self):
+    def object_wrap(self):
         temp = {
             'username': self.username,
             'id': self.id,
@@ -124,7 +136,7 @@ def monitor_printer():
             try:
                 printer_name = message['channel'].replace('printer-', '')
                 print_job = json.loads(message['data'])
-                Job.add(
+                Job.process(
                     printer_name=printer_name,
                     username=print_job['user'],
                     time=print_job['time'],

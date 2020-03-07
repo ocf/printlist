@@ -144,7 +144,7 @@ class Printer {
             }
         }
     }
-    addJob(job) {
+    processJob(job) {
         if (this.jobs.has(job.id))
             return this.jobs.get(job.id).update(job);
         let newJob = new Job(this, job);
@@ -154,6 +154,32 @@ class Printer {
     }
 }
 
+/*
+<AutoReload Object>{
+    printers: {
+        printer_name: <Printer Object> {
+            name: printer_name,
+            reference: <Element Object of parent wrapper>,
+            jobs: <Map Object> [
+                key: job_id
+                value: <Job Object> {
+                    printer: reference,
+                    username: job_username,
+                    id: job_id,
+                    last_updated: job_time,
+                    entry: {
+                        wrapper: <Element Object>,
+                        time: <Element Object>,
+                        username: <Element Object>,
+                        status: <Element Object>
+                    }
+                }
+            ]
+        },
+    }
+    last_fetch: 'time of the last fetch'
+}
+*/
 class AutoReload {
     constructor() {
         this.printers;
@@ -175,7 +201,7 @@ class AutoReload {
         for (let printer_name in allPrinters) {
             let targetPrinter = this.printers[printer_name];
             allPrinters[printer_name].sort((a, b) => a.time - b.time)
-            .forEach(rawJob => targetPrinter.addJob(rawJob));
+            .forEach(rawJob => targetPrinter.processJob(rawJob));
 
             targetPrinter.clean(currTime);
             targetPrinter.updateSize();

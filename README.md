@@ -13,54 +13,6 @@ The developer environment can be initiated through the command:
 
 This will override redis functions within `main.py` with `redis_mimic.py` . This mimic of redis will send printing requests that act as a mock to the actual redis.
 
-#### Layout
-
-##### main.py
-
-```python
-print_jobs = {
-    'printer_name': {
-        'job_id': <Job Object> {
-            username: 'some username',
-            id: 'job_id',
-            last_updated: 'time of last update to status',
-            status: [('oldest status', 'timestamp'), ('newest status', 'timestamp')]
-        }
-    }
-}
-```
-
-##### fetch.js
-
-```javascript
-<AutoReload Object>{
-    printers: {
-        printer_name: <Printer Object> {
-			name: printer_name,
-        	reference: <Element Object of parent wrapper>,
-        	jobs: <Map Object> [
-        		key: job_id
-        		value: <Job Object> {
-        			printer: reference,
-        			username: job_username,
-        			id: job_id,
-        			last_updated: job_time,
-        			entry: {
-        				wrapper: <Element Object>,
-        				time: <Element Object>,
-        				username: <Element Object>,
-        				status: <Element Object>
-    				}
-    			}
-        	]
-        },
-    }
-    last_fetch: 'time of the last fetch'
-}
-```
-
-
-
 #### Redis Messages
 
 > The format of redis messages over the channel of printer-*
@@ -90,7 +42,30 @@ See first [implementation](https://github.com/ocf/puppet/pull/866) of status cod
 
 #### How does Print List work?
 
-![Diagram](diagram.png)
+        +------------------+      +--------------+
+        | Puppet: Enforcer |      |              |
+        |                  <------+   TEA4CUPS   |
+        |    [Whiteout]    |      |              |
+        +----+----------+--+      +--------------+
+             |          |
+             |          |
+    +--------v-+      +-v---------+
+    | Pre Hook |      | Post Hook |
+    +--------+-+      +-+---------+
+             |          |
+           +-v----------v-+
+           |              |
+           | Redis Server |
+           |              |
+           +------+-------+
+                  |
+                  |
+                  |
+           +------v-------+       +--------------+
+           |              +------->              |
+           |   main.py    |       |  Print List  |
+           |              <-------+              |
+           +--------------+       +--------------+
 
 ### Useful Tips
 
