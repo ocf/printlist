@@ -1,4 +1,0 @@
-redis_mimic:
-  status_code_range: 2 # Can go to the max of 4 (for all the error codes)
-  refresh_rate: 1
-  name_length: 20

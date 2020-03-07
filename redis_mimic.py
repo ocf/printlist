@@ -1,61 +1,23 @@
-import json
 import random
-import string
 import time
-import copy
-from config import Config
-
-CONFIG = Config('conf/mimic.yaml')
-
-printers = tuple('printer-' + name for name in CONFIG.PRINTERS.NAMES)
-jobIds = 0
-currentPending = []
-
-def newId():
-    global jobIds
-    jobIds += 1
-    return jobIds
-
+import string
+printers = ('printer-logjam', 'printer-pagefault', 'printer-papercut')
 
 def randUsername():
-    return ''.join([random.choice(string.ascii_lowercase) for _ in range(CONFIG.REDIS_MIMIC.NAME_LENGTH)])
-
+    return ''.join([random.choice(string.ascii_lowercase) for _ in range(10)])
 
 def addJob():
     rand = random.randrange(len(printers))
-    tempId = newId()
-    tempStatus = random.randrange(CONFIG.REDIS_MIMIC.STATUS_CODE_RANGE)
-    completeOne = random.randrange(2)
-    if not(completeOne) and len(currentPending) != 0:
-        completed = currentPending.pop(0)
-        completed['data']['time'] = time.time()
-        completed['data']['status'] = 0
-        print(completed['data'])
-        completed['data'] = json.dumps(completed['data'])
-        return completed
-    else:
-        tempData = {
-            'channel': printers[rand],
-            'data': {
-                'user': randUsername(),
-                'time': time.time(),
-                'status': tempStatus,
-                'id': tempId
-            }
-        }
-        if tempStatus == 1:
-            currentPending.append(tempData)
-        returnedData = copy.deepcopy(tempData)
-        returnedData['data'] = json.dumps(returnedData['data'])
-        return returnedData
-
+    return {
+        'channel': printers[rand].encode(),
+        'data': randUsername().encode()
+    }
 
 def mimic_sub(*args):
     return mimic
 
-
 class mimic:
     @staticmethod
     def get_message():
-        time.sleep(CONFIG.REDIS_MIMIC.REFRESH_RATE)
+        time.sleep(5)
         return addJob()

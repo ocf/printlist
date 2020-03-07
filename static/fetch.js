@@ -1,224 +1,85 @@
 const RELOAD_TIME = 3000; 
-
-const PrintJob = {
-    parse(code) {
-        for (let key in PrintJob) {
-            if (PrintJob[key].CODE === code) return PrintJob[key];
-        }
-    },
-    COMPLETED: {
-        CODE: 0,
-        ATTR: 'completed',
-        MSG: 'SUCCESS'
-    },
-    PENDING: {
-        CODE: 1,
-        ATTR: 'pending',
-        MSG: 'PENDING'
-    },
-    FILE_ERROR: {
-        CODE: 2,
-        ATTR: 'error',
-        MSG: 'FAILURE'
-    },
-    QUOTA_LIMIT: {
-        CODE: 3,
-        ATTR: 'error',
-        MSG: 'FAILURE'
-    },
-    JOB_ERROR: {
-        CODE: 4,
-        ATTR: 'error',
-        MSG: 'FAILURE'
-    }
-}
-
-
-function createElement(tag, classList, attributes, innerText) {
-    let currentElement = document.createElement(tag);
-    if (classList && !(classList instanceof Array) && typeof classList === 'string') classList = [classList];
-    else classList = [];
-    if (attributes) {
-        if (typeof attributes === 'string') attributes = [attributes]
-        if (attributes instanceof Array) {
-            attributes.forEach(attribute => currentElement.setAttribute(key, ''));
-        } else {
-            for (let key in attributes) {
-                currentElement.setAttribute(key, attributes[key])
-            }
-        }
-    }
-    classList.forEach(className => currentElement.classList.add(className));
-    if (innerText) currentElement.innerText = innerText;
-    return currentElement;
-}
+const PERSISTENCE_TIME = 180000;
 
 class Job {
-    constructor(printer, job) {
-        this.printer = printer;
-        this.username = job.username;
-        this.id = job.id;
-        this.last_updated = new Date(job.last_updated*1000);
-        this.createEntry();
-        this.update(job);
+    constructor(parent, printer_name, username, date) {
+        this.date = new Date(date*1000);
+        this.parent = parent;
+        this.printer_name = printer_name;
+        this.username = username;
+        this.element = this.createElement();
+        this.symbol = Symbol();
     }
-    update(job) {
-        this.status = job.status;
-        this.last_updated = new Date(job.last_updated*1000);
-        let stat = PrintJob.parse(this.status);
-        this.entry.status.innerText = stat.MSG;
-        this.entry.status.setAttribute('status', stat.ATTR);
+    createElement(){
+        let wrapper = document.createElement('div');
+        wrapper.classList.add('printlist-user');
+        let name = document.createElement('div');
+        name.classList.add('printlist-user-handle');
+        name.innerText = this.username;
+        wrapper.appendChild(name);
+        return wrapper;
     }
-    createEntry() {
-        this.entry = {
-            wrapper: createElement('div', 'printlist-entry'),
-            time: createElement(
-                'div',
-                'time-entry',
-                null,
-                `${this.last_updated.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                })}`
-            ),
-            username: createElement('div', 'username-entry', null, this.username),
-            status: createElement('div', 'status-entry')
-        };
-        this.entry.wrapper.appendChild(this.entry.time);
-        this.entry.wrapper.appendChild(this.entry.status);
-        this.entry.wrapper.appendChild(this.entry.username);
-    }
-    clean(time) {
-        switch (this.status) {
-            case PrintJob.COMPLETED.CODE:
-                if (time - this.last_updated.getTime() > window.PERSIST_TIME.COMPLETED)
-                    this.remove();
-                break;
-            case PrintJob.PENDING.CODE:
-                if (time - this.last_updated.getTime() > window.PERSIST_TIME.DEFAULT)
-                    this.remove();
-                break;
-            case PrintJob.FILE_ERROR.CODE:
-            case PrintJob.QUOTA_LIMIT.CODE:
-            case PrintJob.JOB_ERROR.CODE:
-            default: 
-                if (time - this.last_updated.getTime() > window.PERSIST_TIME.ERROR)
-                    this.remove();
+    remove(){
+        this.parent.printers[this.printer_name].delete(this.symbol);
+        if (this.element) {
+            this.element.remove();
+            delete this.element;
         }
-    }
-    remove() {
-        this.printer.jobs.delete(this.id);
-        if (this.entry) {
-            let targetWrapper = this.entry.wrapper;
-            targetWrapper.style.animation = "exit 1s";
-            targetWrapper.addEventListener('animationend', ()=>{
-                targetWrapper.style.opacity = 0;
-                targetWrapper.style.animation = 'exit-post 1s';
-                targetWrapper.addEventListener('animationend', ()=>{
-                    targetWrapper.remove();
-                })
-            });
-            delete this.entry;
-        }
+
     }
 }
 
-class Printer {
-    constructor(printer_name) {
-        this.name = printer_name;
-        this.reference = document.querySelector(`#${printer_name} .printlist`);
-        this.jobs = new Map();
-        this.updateSize();
-    }
-    clean(currTime) {
-        this.jobs.forEach(job => job.clean(currTime));
-    }
-    updateSize() {
-        if (this.jobs.size === 0 && !this.nullElement) {
-            this.nullElement = createElement('div', 'printlist-null', null, '😢 There are no print jobs. 😢');
-            this.reference.appendChild(this.nullElement);
-        } else if (this.jobs.size !== 0) {
-            if (this.nullElement) {
-                this.nullElement.remove();
-                this.nullElement = null;
-            }
-        }
-    }
-    processJob(job) {
-        if (this.jobs.has(job.id))
-            return this.jobs.get(job.id).update(job);
-        let newJob = new Job(this, job);
-        if (!this.reference.firstChild) this.reference.appendChild(newJob.entry.wrapper);
-        else this.reference.firstChild.before(newJob.entry.wrapper);
-        return this.jobs.set(job.id, newJob);
-    }
-}
-
-/*
-<AutoReload Object>{
-    printers: {
-        printer_name: <Printer Object> {
-            name: printer_name,
-            reference: <Element Object of parent wrapper>,
-            jobs: <Map Object> [
-                key: job_id
-                value: <Job Object> {
-                    printer: reference,
-                    username: job_username,
-                    id: job_id,
-                    last_updated: job_time,
-                    entry: {
-                        wrapper: <Element Object>,
-                        time: <Element Object>,
-                        username: <Element Object>,
-                        status: <Element Object>
-                    }
-                }
-            ]
-        },
-    }
-    last_fetch: 'time of the last fetch'
-}
-*/
 class AutoReload {
-    constructor() {
+    constructor(){
         this.printers;
         this.last_fetch = 0;
         this.update(this.last_fetch);
         setInterval(() => this.update(this.last_fetch), RELOAD_TIME);
     }
-    async update(last_fetch = 0) {
+    async update(last_fetch = 0){
         let fetched = await fetch(`/reload/recent?last-fetch=${last_fetch}`);
-        let allPrinters = await fetched.json();
+        let data = await fetched.json();
         this.last_fetch = Date.now();
         if (!this.printers) {
             this.printers = {};
-            for (let printer_name in allPrinters) 
-                this.printers[printer_name] = new Printer(printer_name);
+            for (let printer_name in data) {
+                this.printers[printer_name] = new Map();
+            }
         }
         let currTime = Date.now();
-
-        for (let printer_name in allPrinters) {
-            let targetPrinter = this.printers[printer_name];
-            allPrinters[printer_name].sort((a, b) => a.time - b.time)
-            .forEach(rawJob => targetPrinter.processJob(rawJob));
-
-            targetPrinter.clean(currTime);
-            targetPrinter.updateSize();
+        for (let printer_name in data) {
+            let parent = document.querySelector(`.${printer_name} h1`);
+            data[printer_name].sort((a, b) => a[1] - b[1])
+            .forEach(item => {
+                let job = new Job(this, printer_name, item[0], item[1]);
+                this.printers[printer_name].set(job.symbol, job);
+                parent.after(job.element);
+            });
+            this.printers[printer_name].forEach(job => {
+                if (currTime - job.date.getTime() > PERSISTENCE_TIME)
+                    job.remove();
+            });
+            if (this.printers[printer_name].size == 0) {
+                if (!document.querySelector(`.${printer_name} .printlist-null`))
+                    parent.after(this.createNull());
+            }
+            else
+                this.deleteNull(printer_name);
         }
     }
+    createNull(){
+        let nullDiv = document.createElement('div');
+        nullDiv.classList.add('printlist-null');
+        nullDiv.innerText = '(there are no jobs printing)';
+        return nullDiv;
+    }
+    deleteNull(printer_name){
+        let target = document.querySelector(`.${printer_name} .printlist-null`);
+        if (target)
+            target.remove();
+    }
 }
-(function() {
-    fetch('/configuration').then(res => {
-        res.json().then(config => {
-            for (time in config) {
-                config[time] = config[time]*1000;
-            }
-            console.log('Configuration of persistence time found');
-            Object.assign(window, {
-                PERSIST_TIME: config
-            });
-        new AutoReload();
-        });
-    });
+
+(function(){
+    new AutoReload();
 }());

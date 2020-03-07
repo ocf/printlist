@@ -5,4 +5,4 @@
 cd
 python3 -m venv wsgi-tester
 . wsgi-tester/bin/activate
-pip install redis flask gunicorn PyYAML
+pip install redis flask gunicorn

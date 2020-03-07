@@ -1,45 +1,125 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <title>Print List</title>
+<!-- Home page template. -->
+<!-- Move from static. -->
+<link href="https://fonts.googleapis.com/css?family=Fira+Sans:400,600,700&display=swap" rel="stylesheet">
+<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<title>Print List</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+html {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  height: 100%;
+  font-family: "Fira Sans", "Comic Sans MS", sans-serif;
+}
+
+header {
+  display: flex;
+  background-color: #de9;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+header h1 {
+  font-size: 4.5em;
+  padding: 0 50px;
+}
+
+.topnav {
+  display: none;
+}
+
+.topnav a {
+  float: left;
+  color: #353535;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+.topnav a:hover {
+  background-color: rgb(143, 143, 143);
+}
+
+.dashboard {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 10px 5vw;
+}
+
+.printlist {
+  min-width: 300px;
+  min-height: 80vh;
+}
+
+.printlist h1 {
+  font-size: 3em;
+  font-weight: 700;
+}
+
+.printlist-null {
+  font-size: 1.6em;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.topnav-img {
+  padding-right: 20px;
+}
+
+footer {
+  background-color: #0f4d92;
+  color: #fff;
+  font-size: 1.2em;
+  line-height: 1.5;
+  text-align: center;
+  flex: 1;
+  padding: 40px 0;
+}
+
+.printlist-user {
+  font-size: 1.5em;
+  padding: 10px 0;
+}
+
+.printlist-user-handle {
+  font-size: 3rem;
+  color: #666;
+  overflow-x: hidden;
+}
+</style>
 </head>
-
 <body>
-  <noscript>
-    <strong>
-      We're sorry but this page doesn't work properly without JavaScript
-      enabled. Please enable it to continue.
-    </strong>
-  </noscript>
-
-  <header id="header">
-    <h1 id="title">Print List</h1>
-    <img id="ocf-logo" src="{{ url_for('static', filename='ocf-logo.svg') }}" />
-
-  </header>
-
-  <div id="dashboard">
-    {% for printer in printer_names %}
-    <div id="{{printer}}" class="printer">
-      <h2 class="printer-title">{{printer}}</h2>
-      <div class="printlist"></div>
-    </div>
-    {% endfor %}
+<header>
+  <h1>Print List</h1>
+  <nav class="topnav">
+    <a href="logjam">logjam</a>
+    <a href="papercut">papercut</a>
+    <a href="pagefault">pagefault</a>
+  </nav>
+  <img class="topnav-img" src="{{ url_for('static', filename='ocf-logo.svg') }}"/>
+</header>
+<div class="dashboard">
+  {% for printer in printer_names %}
+  <div class="printlist {{printer[0]}}">
+    <h1>{{printer[1]}}</h1>
   </div>
-
-  <footer id="footer">
-    <p>This page is updated frequently (every few seconds).</p>
-    <p>If you don't see your job <b>printed out</b>, please contact a staffer.</p>
-    <p><i>Thank you for flying OCF!</i></p>
-  </footer>
-
-  <script type="text/javascript" src="{{ url_for('static', filename='fetch.js') }}"></script>
+  {% endfor %}
+</div>
+<footer>
+  This page is updated frequently (every few seconds). <br/>
+  If you don't see your job <b>printed out</b>, please contact a staffer. <br/>
+  <i>Thank you for flying OCF!</i>
+</footer>
+<script type="text/javascript" src="{{ url_for('static', filename='fetch.js') }}"></script>
 </body>
-
 </html>
