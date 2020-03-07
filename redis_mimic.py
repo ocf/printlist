@@ -5,7 +5,7 @@ import time
 import copy
 from config import Config
 
-CONFIG = Config('conf/mimic.yaml')
+CONFIG = Config('static_conf/mimic.yaml')
 
 printers = tuple('printer-' + name for name in CONFIG.PRINTERS.NAMES)
 jobIds = 0

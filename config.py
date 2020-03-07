@@ -10,7 +10,7 @@ def deepNamespace(dictionary):
 	return SimpleNamespace(**newdict)
 
 def Config(*filenames):
-	with open('conf/default.yaml', 'r') as stream:
+	with open('static_conf/default.yaml', 'r') as stream:
 		configuration = yaml.safe_load(stream)
 	for filename in filenames:
 		with open(filename, 'r') as stream:
