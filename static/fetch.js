@@ -1,4 +1,4 @@
-const RELOAD_TIME = 3000; 
+const RELOAD_TIME = 3000;
 const PERSISTENCE_TIME = 180000;
 
 class Job {
