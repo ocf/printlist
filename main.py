@@ -44,11 +44,13 @@ def read_config():
 
 printer_dict = {
     'printer-logjam': [],
-    'printer-pagefault': [], 'printer-papercut': [],
+    'printer-papercut': [],
+    'printer-pagefault': [],
 }
 printer_names = [
+    ('printer-logjam', 'logjam'),
     ('printer-papercut', 'papercut'),
-    ('printer-logjam', 'logjam'), ('printer-pagefault', 'pagefault'),
+    ('printer-pagefault', 'pagefault'),
 ]
 
 
