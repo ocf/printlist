@@ -14,7 +14,7 @@ def objects():
         name="printlist",
         image=get_image_tag("printlist"),
         ports=[8000],
-    )
+    ).build()
 
     svc = Service(
         name="printlist",
@@ -43,7 +43,6 @@ def objects():
 
     volumes = {"volumes": [{"name": "conf", "secret": {"secretName": "broker-conf"}}]}
 
-    dep = dep.build()
     dep = surgery.shelve(
         dep, ["spec", "template", "spec", "containers", 0], volume_mounts, create_parents=True
     )
