@@ -46,7 +46,7 @@ def objects():
 
     volumes = {
         'volumes': [
-        {'name': 'conf', 'secret': {'secretName': 'broker-conf'}},
+            {'name': 'conf', 'secret': {'secretName': 'broker-conf'}},
         ],
     }
 
